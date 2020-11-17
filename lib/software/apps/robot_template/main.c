@@ -1,68 +1,86 @@
+// Display app
+//
+// Write messages to a Newhaven OLED display over SPI
 
-/*
-   Test code for the pixy2
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+
+#include "app_error.h"
+#include "nrf.h"
+#include "nrf_delay.h"
+#include "nrf_gpio.h"
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+#include "nrf_log_default_backends.h"
+#include "nrf_pwr_mgmt.h"
+#include "nrf_serial.h"
+#include "nrfx_gpiote.h"
+#include "nrf_drv_spi.h"
+
+#include "buckler.h"
+#include "display.h"
+
+int main(void) {
+  ret_code_t error_code = NRF_SUCCESS;
+
+  // initialize RTT library
+  error_code = NRF_LOG_INIT(NULL);
+  APP_ERROR_CHECK(error_code);
+  NRF_LOG_DEFAULT_BACKENDS_INIT();
+  printf("Log initialized\n");
+
+  // initialize spi master
+  nrf_drv_spi_t spi_instance = NRF_DRV_SPI_INSTANCE(1);
+  nrf_drv_spi_config_t spi_config = {
+    .sck_pin = BUCKLER_SD_SCLK,
+    .mosi_pin = BUCKLER_SD_MOSI,
+    .miso_pin = BUCKLER_SD_MISO,
+    .ss_pin = BUCKLER_SD_CS,
+    .irq_priority = NRFX_SPI_DEFAULT_CONFIG_IRQ_PRIORITY,
+    .orc = 0,
+    .frequency = NRF_DRV_SPI_FREQ_4M,
+    .mode = NRF_DRV_SPI_MODE_3,
+    .bit_order = NRF_DRV_SPI_BIT_ORDER_LSB_FIRST
+  };
+  error_code = nrf_drv_spi_init(&spi_instance, &spi_config, NULL, NULL);
+  APP_ERROR_CHECK(error_code);
+
+  // Pointers
+  /**
+ * @brief Function for starting the SPI data transfer.
+ *
+ * If an event handler was provided in the @ref nrf_drv_spi_init call, this function
+ * returns immediately and the handler is called when the transfer is done.
+ * Otherwise, the transfer is performed in blocking mode, which means that this function
+ * returns when the transfer is finished.
+ *
+ * @note Peripherals using EasyDMA (for example, SPIM) require the transfer buffers
+ *       to be placed in the Data RAM region. If they are not and an SPIM instance is
+ *       used, this function will fail with the error code NRF_ERROR_INVALID_ADDR.
+ *
+ * @param[in] p_instance       Pointer to the driver instance structure.
+ * @param[in] p_tx_buffer      Pointer to the transmit buffer. Can be NULL
+ *                             if there is nothing to send.
+ * @param     tx_buffer_length Length of the transmit buffer.
+ * @param[in] p_rx_buffer      Pointer to the receive buffer. Can be NULL
+ *                             if there is nothing to receive.
+ * @param     rx_buffer_length Length of the receive buffer.
+ *
+ * @retval NRF_SUCCESS            If the operation was successful.
+ * @retval NRF_ERROR_BUSY         If a previously started transfer has not finished
+ *                                yet.
+ * @retval NRF_ERROR_INVALID_ADDR If the provided buffers are not placed in the Data
+ *                                RAM region.
+ __STATIC_INLINE
+ ret_code_t nrf_drv_spi_transfer(nrf_drv_spi_t const * const p_instance,
+                                 uint8_t const * p_tx_buffer,
+                                 uint8_t         tx_buffer_length,
+                                 uint8_t       * p_rx_buffer,
+                                 uint8_t         rx_buffer_length);
  */
 
-#include <stdint.h>
-#include <string.h>
-#include <stdbool.h>
-#include "nordic_common.h"
-#include "nrf.h"
-#include "nrf_gpiote.h"
-#include "nrf_gpio.h"
-#include "nrf_drv_gpiote.h"
-#include "nrf51_bitfields.h"
-#include "nrf_delay.h"
-#include "app_timer.h"
-#include "app_pwm.h"
-#include "app_uart.h"
-#include "app_util_platform.h"
-#include "boards.h"
+  while(1) {
 
-
-#define BASE 0x40003000
-#define CSN 0x40003514
-#define SCK 0x40003508
-#define MISO 0x4000350C
-#define MOSI 0x40003510
-#define RXD 0x40003534
-#define TXD 0x40003544
-
-
-// Application main function.
-int main(void)
-{
-  uint32_t* pins = (uint32_t*) BASE;
-  //Set the MOSI pin to 14 and connect
-  pins =(uint32_t*) CSN;
-  *pins  = 0;
-  *pins  = *pins | 0xE;
-  //Set the clock pin to 13 then connect
-  pins = (uint32_t*)SCK;
-  *pins = 0;
-  *pins = *pins | 0xD;
-  //Set the MISO pin to 12 and connect
-  pins = (uint32_t*)MISO;
-  *pins  = 0;
-  *pins  = *pins | 0xC;
-  //Set the MOSI pin to 11 and connect
-  pins =(uint32_t*) MOSI;
-  *pins  = 0;
-  *pins  = *pins | 0xB;
-  //Receive pointer
-  uint32_t* RXD_PTR = (uint32_t*) RXD;
-  uint32_t* TXD_PTR = (uint32_t*) TXD;
-
-  *TXD_PTR = 0xAE;
-  nrf_delay_ms(10);
-  *TXD_PTR = 0xc1;
-  nrf_delay_ms(10);
-  *TXD_PTR = 0x0e;
-  nrf_delay_ms(10);
-  *TXD_PTR = 0x00;
-
-    // main loop:
-    while(1) {
-        printf("The value in the pixy2 is:%ld \n", *RXD_PTR);
-    }
+  }
 }
