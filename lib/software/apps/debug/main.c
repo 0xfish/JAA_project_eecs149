@@ -32,23 +32,7 @@ NRF_TWI_MNGR_DEF(twi_mngr_instance, 5, 0);
 typedef enum {
   OFF,
   DRIVING,
-  TURNING,
 } robot_state_t;
-
-//------------------------------------------------------------------------------
-//Function that converts encoder values to distance.
-//------------------------------------------------------------------------------
-static float measure_distance ( uint16_t current_encoder ,
-uint16_t previous_encoder ) {
-// conversion from encoder ticks to meters
-const float CONVERSION = 0.0006108;
-// calculate result here and return it
-if (current_encoder < previous_encoder) {
-    return (CONVERSION*current_encoder) + (CONVERSION*previous_encoder);
-}
-return (CONVERSION*current_encoder) - (CONVERSION*previous_encoder);
-}
-//------------------------------------------------------------------------------
 
 
 int main(void) {
@@ -101,11 +85,7 @@ int main(void) {
   // configure initial state
   robot_state_t state = OFF;
   KobukiSensors_t sensors = {0};
-  uint32_t speed = 75; //In mm/s
-  uint16_t previous;
-  uint16_t current;
-  float distance;
-  double degrees;
+  kobukiDriveDirect(50,50);
   // loop forever, running state machine
   while (1) {
     // read sensors from robot
@@ -122,11 +102,10 @@ int main(void) {
         // transition logic
         if (is_button_pressed(&sensors)) {
           state = DRIVING;
-          previous = sensors.leftWheelEncoder;
         } else {
           // perform state-specific actions here
-          display_write("OFF", DISPLAY_LINE_0);
-          kobukiDriveDirect(0, 0);
+          display_write("OFF, update", DISPLAY_LINE_0);
+          kobukiDriveDirect(50,50);
           state = OFF;
         }
         break; // each case needs to end with break!
@@ -136,46 +115,15 @@ int main(void) {
         // transition logic
         if (is_button_pressed(&sensors)) {
           state = OFF;
-          distance = 0;
-        }else if (distance >= 0.25) {
-          state = TURNING;
-          lsm9ds1_start_gyro_integration();
-          degrees = 0;
-          distance = 0;
         } else {
           // perform state-specific actions here
-          display_write("DRIVING", DISPLAY_LINE_0);
-          kobukiDriveDirect(speed, speed);
+          display_write("DRIVING, update", DISPLAY_LINE_0);
+          kobukiDriveDirect(50,50);
           state = DRIVING;
-          current = sensors.leftWheelEncoder;
-          distance += measure_distance(current, previous);
-          previous = current;
-          char buf [16];
-          snprintf (buf , 16, "%f", distance);
-          display_write (buf , DISPLAY_LINE_1 );
         }
         break; // each case needs to end with break!
       }
-      case TURNING: {
-        if (is_button_pressed(&sensors)) {
-            lsm9ds1_stop_gyro_integration();
-            state = OFF;
-        } else if (degrees >= 90) {
-          state = DRIVING;
-          lsm9ds1_stop_gyro_integration();
-        } else {
-          display_write("TURNING", DISPLAY_LINE_0);
-          kobukiDriveDirect(speed, -speed);
-          state = TURNING;
-          //Account for momentum;
 
-          degrees += fabs((double)lsm9ds1_read_gyro_integration().x_axis);
-          //Integrating to check the degrees
-          char buf [16];
-          snprintf (buf , 16, "%f", degrees);
-          display_write (buf , DISPLAY_LINE_1 );
-        }
-      }
       // add other cases here
 
     }
