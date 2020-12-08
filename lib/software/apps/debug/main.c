@@ -85,7 +85,6 @@ int main(void) {
   // configure initial state
   robot_state_t state = OFF;
   KobukiSensors_t sensors = {0};
-  kobukiDriveDirect(50,50);
   // loop forever, running state machine
   while (1) {
     // read sensors from robot
@@ -102,10 +101,11 @@ int main(void) {
         // transition logic
         if (is_button_pressed(&sensors)) {
           state = DRIVING;
+          display_write("WTH", DISPLAY_LINE_0);
         } else {
           // perform state-specific actions here
           display_write("OFF, update", DISPLAY_LINE_0);
-          kobukiDriveDirect(50,50);
+          kobukiDriveDirect(0,0);
           state = OFF;
         }
         break; // each case needs to end with break!
