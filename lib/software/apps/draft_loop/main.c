@@ -32,7 +32,7 @@
 
 
 void check_status(int8_t code, const char *label) {
-  if (code < -1)
+  //if (code < -1)
     printf("%s failed with %d\n", label, code);
 }
 
@@ -75,15 +75,19 @@ void setup() {
 
   // initialize spi master
   APP_ERROR_CHECK(nrf_drv_spi_init(&spi_instance, &spi_config, NULL, NULL));
+  nrf_delay_ms(10);
 
   // We need to initialize the pixy object
   check_status(pixy_init(&pixy, &spi_instance), "initialize");
   print_version(pixy->version);
+  nrf_delay_ms(10);
 
   // Use color connected components program for the pan tilt to track
   check_status(changeProg(pixy, PIXY_PROG_COLOR_CODE), "change program");
+  nrf_delay_ms(10);
 
   check_status(getResolution(pixy), "resolution");
+  nrf_delay_ms(10);
 
   pid_init(&rotateLoop, 1, 0, 0, false);
   pid_init(&translateLoop, 1, 0, 0, false);
@@ -117,13 +121,15 @@ block_t *trackBlock(int8_t index) {
 
 
 void loop() {
-  printf("FPS %d\n", getFPS(pixy));
+  //printf("FPS %d\n", getFPS(pixy));
 
   // get active blocks from Pixy
   int8_t blocks = getBlocks(pixy, false, CCC_SIG_ALL, CCC_MAX_BLOCKS);
+  //printf("here\n");
 
   check_status(blocks, "blocks");
   if (blocks <= 0)
+    //printf("here\n");
     goto stop;
 
   block_t *block;
@@ -153,9 +159,9 @@ void loop() {
 
     // set wheel speeds
     if (panOffset < -20)
-      kobukiDriveDirect(40, -40);
+      kobukiDriveDirect(20, -20);
     else if (panOffset > 20)
-      kobukiDriveDirect(-40, 40);
+      kobukiDriveDirect(-20, 20);
     else
       kobukiDriveDirect(0, 0);
 
@@ -171,6 +177,7 @@ void loop() {
   return;
 
   stop:
+    //printf("here\n");
     pid_reset(&rotateLoop);
     pid_reset(&translateLoop);
     kobukiDriveDirect(0, 0);
@@ -180,13 +187,15 @@ void loop() {
 
 
 int main(void) {
-  printf("here\n");
+  //printf("here\n");
   setup();
 
   while (1) {
     // read sensors from robot
+    //printf("here\n");
     kobukiSensorPoll(&sensors);
+    //printf("%d\n", getVersion(pixy));
+    //print_version(pixy->version);
     loop();
-    nrf_delay_ms(200);
   }
 }
