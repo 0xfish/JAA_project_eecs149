@@ -172,9 +172,9 @@ void loop() {
 
     // set wheel speeds
     if (panOffset < -20)
-      kobukiDriveDirect(20, -20);
+      kobukiDriveDirect(40, -40);
     else if (panOffset > 20)
-      kobukiDriveDirect(-20, 20);
+      kobukiDriveDirect(-40, 40);
     else
       kobukiDriveDirect(0, 0);
 
@@ -210,6 +210,7 @@ int main(void) {
     //printf("%d\n", getVersion(pixy));
     //print_version(pixy->version);
     loop();
+    //kobukiDriveDirect(-40, 40);
     
     //
   }
