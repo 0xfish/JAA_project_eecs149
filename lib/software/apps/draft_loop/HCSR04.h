@@ -5,7 +5,7 @@
 
 
 /*Setups the entire distance sensor.*/
-void setup();
+void setup_dist();
 
 /*Setups only the pins*/
 void setupPins();
