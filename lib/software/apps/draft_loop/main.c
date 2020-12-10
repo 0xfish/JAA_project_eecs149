@@ -36,12 +36,12 @@
 //==============================================================================
 //State Encoding and Varaibles
 //==============================================================================
-enum STATES {
-  DRIVING = 0xA,
-  RESTING = 0xB,
-  SEARCHING = 0xC
-};
-enum STATES STATE;
+// enum STATES {
+//   DRIVING = 0xA,
+//   RESTING = 0xB,
+//   SEARCHING = 0xC
+// };
+// enum STATES STATE;
 //==============================================================================
 
 void check_status(int8_t code, const char *label) {
@@ -172,9 +172,9 @@ void loop() {
 
     // set wheel speeds
     if (panOffset < -20)
-      kobukiDriveDirect(20, -20);
+      kobukiDriveDirect(40, -40);
     else if (panOffset > 20)
-      kobukiDriveDirect(-20, 20);
+      kobukiDriveDirect(-40, 40);
     else
       kobukiDriveDirect(0, 0);
 
@@ -210,6 +210,8 @@ int main(void) {
     //printf("%d\n", getVersion(pixy));
     //print_version(pixy->version);
     loop();
+    //kobukiDriveDirect(-40, 40);
+    
     //
   }
 }

@@ -31,7 +31,7 @@ void setupPins() {
 }
 
 /*Setup distance sensor.*/
-void setup() {
+void setup_dist() {
   //Set the direction of the pins
   //PinTrig is input to the sensor.
   nrf_gpio_pin_dir_set(pinTrig, NRF_GPIO_PIN_DIR_OUTPUT);
