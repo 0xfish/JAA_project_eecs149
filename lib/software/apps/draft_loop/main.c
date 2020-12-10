@@ -36,12 +36,12 @@
 //==============================================================================
 //State Encoding and Varaibles
 //==============================================================================
-enum STATES {
-  DRIVING = 0xA,
-  RESTING = 0xB,
-  SEARCHING = 0xC
-};
-enum STATES STATE;
+// enum STATES {
+//   DRIVING = 0xA,
+//   RESTING = 0xB,
+//   SEARCHING = 0xC
+// };
+// enum STATES STATE;
 //==============================================================================
 
 void check_status(int8_t code, const char *label) {
@@ -210,6 +210,7 @@ int main(void) {
     //printf("%d\n", getVersion(pixy));
     //print_version(pixy->version);
     loop();
+    
     //
   }
 }

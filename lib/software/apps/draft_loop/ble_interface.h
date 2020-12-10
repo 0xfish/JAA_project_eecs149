@@ -16,7 +16,7 @@ enum STATES {
   RESTING = 0xB,
   SEARCHING = 0xC
 };
-enum STATES STATE;
+static enum STATES state;
 //==============================================================================
 
 // Intervals for advertising and connections
@@ -38,7 +38,7 @@ static simple_ble_service_t safety_service = {{
 
 /*List Characteristics here:*/
 static simple_ble_char_t driving_state_char = {.uuid16 = 0x6C71};
-static enum STATES state;
+
 
 /*Initializes the BLE for the ROMI.*/
 void setup_ble();
