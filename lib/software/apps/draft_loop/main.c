@@ -29,6 +29,10 @@
 
 #include "pixy2_spi.h"
 #include "pid.h"
+
+#include "HCSR04.h"
+#include "virtual_timer_linked_list.h"
+#include "virtual_timer.h"
 //==============================================================================
 //State Encoding and Varaibles
 //==============================================================================
@@ -39,6 +43,7 @@ enum STATES {
 };
 enum STATES STATE;
 //==============================================================================
+
 void check_status(int8_t code, const char *label) {
   //if (code < -1)
     printf("%s failed with %d\n", label, code);
