@@ -3,7 +3,7 @@
 
 
 /*Initializes the BLE for the ROMI.*/
-void setup() {
+void setup_ble() {
   // Main application state
   simple_ble_app_t* simple_ble_app;
   simple_ble_app = simple_ble_init(&ble_config);

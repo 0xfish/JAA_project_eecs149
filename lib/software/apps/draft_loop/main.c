@@ -29,23 +29,18 @@
 
 #include "pixy2_spi.h"
 #include "pid.h"
-
 #include "HCSR04.h"
-#include "virtual_timer_linked_list.h"
-#include "virtual_timer.h"
-//==============================================================================
-//State Encoding and Varaibles
-//==============================================================================
-enum STATES {
-  DRIVING = 0xA,
-  RESTING = 0xB,
-  SEARCHING = 0xC
-};
-enum STATES STATE;
-//==============================================================================
+
+
+typedef enum {
+  OFF,
+  SCANNING,
+  TRACKING
+} robot_state_t;
+
 
 void check_status(int8_t code, const char *label) {
-  //if (code < -1)
+  if (code < -1)
     printf("%s failed with %d\n", label, code);
 }
 
@@ -70,6 +65,7 @@ drv_pixy2_spi_t *pixy;
 pid_loop_t rotateLoop, translateLoop;
 int8_t focusIndex;
 KobukiSensors_t sensors = {0};
+robot_state_t state;
 
 
 void setup() {
@@ -88,19 +84,15 @@ void setup() {
 
   // initialize spi master
   APP_ERROR_CHECK(nrf_drv_spi_init(&spi_instance, &spi_config, NULL, NULL));
-  nrf_delay_ms(10);
 
   // We need to initialize the pixy object
   check_status(pixy_init(&pixy, &spi_instance), "initialize");
   print_version(pixy->version);
-  nrf_delay_ms(10);
 
-  // Use color connected components program for the pan tilt to track
+  // Use color connected components program
   check_status(changeProg(pixy, PIXY_PROG_COLOR_CODE), "change program");
-  nrf_delay_ms(10);
 
   check_status(getResolution(pixy), "resolution");
-  nrf_delay_ms(10);
 
   pid_init(&rotateLoop, 1, 0, 0, false);
   pid_init(&translateLoop, 1, 0, 0, false);
@@ -133,30 +125,49 @@ block_t *trackBlock(int8_t index) {
 }
 
 
+void reset() {
+  pid_reset(&rotateLoop);
+  pid_reset(&translateLoop);
+  kobukiDriveDirect(0, 0);
+  focusIndex = -1;
+}
+
+
 void loop() {
-  //printf("FPS %d\n", getFPS(pixy));
+  if (state == OFF)
+    return;
+  
+  printf("FPS %d\n", getFPS(pixy));
 
   // get active blocks from Pixy
   int8_t blocks = getBlocks(pixy, false, CCC_SIG_ALL, CCC_MAX_BLOCKS);
-  //printf("here\n");
-
   check_status(blocks, "blocks");
-  if (blocks <= 0)
-    //printf("here\n");
-    goto stop;
+  if (blocks <= 0) { // no blocks in view or error
+    state = SCANNING;
+    reset();
+    return;
+  }
 
   block_t *block;
-  if (focusIndex == -1) { // search....
+
+  switch (state) {
+  case SCANNING: // search...
     printf("Searching for block...\n");
     focusIndex = acquireBlock();
-    if (focusIndex >= 0)
+    if (focusIndex >= 0) {
       printf("Found block!\n");
-  }
-  if (focusIndex != -1) // If we've found a block, find it, track it
-     block = trackBlock(focusIndex);
+      state = TRACKING; // fall through
+    } else
+      break;
 
-  // If we're able to track it, move motors
-  if (block != NULL) {
+  case TRACKING: // If we've found a block, find it, track it
+    block = trackBlock(focusIndex);
+    if (block == NULL) { // no object detected, go into reset state
+      reset();
+      break;
+    }
+    // If we're able to track it, move motors
+
     // calculate pan and tilt "errors" with respect to first object (blocks[0]),
     // which is the biggest object (they are sorted by size).
     int32_t panOffset = (int32_t)pixy->frameWidth/2 - (int32_t)block->m_x;
@@ -182,34 +193,19 @@ void loop() {
 #if 0 // for debugging
     printf("%ld %ld %ld %ld", rotateLoop.m_command, translateLoop.m_command, left, right);
 #endif
-
-  // no object detected, go into reset state
-  } else {
-    goto stop;
+    break;
   }
-  return;
-
-  stop:
-    //printf("here\n");
-    pid_reset(&rotateLoop);
-    pid_reset(&translateLoop);
-    kobukiDriveDirect(0, 0);
-    focusIndex = -1;
 }
 
 
-
 int main(void) {
-  //printf("here\n");
   setup();
+  state = SCANNING;
 
   while (1) {
     // read sensors from robot
-    //printf("here\n");
     kobukiSensorPoll(&sensors);
-    //printf("%d\n", getVersion(pixy));
-    //print_version(pixy->version);
+
     loop();
-    //
   }
 }

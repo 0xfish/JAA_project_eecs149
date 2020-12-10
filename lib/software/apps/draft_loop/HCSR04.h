@@ -3,9 +3,8 @@
 #include <stdbool.h>
 
 
-
 /*Setups the entire distance sensor.*/
-void setup();
+void setupUS();
 
 /*Setups only the pins*/
 void setupPins();
