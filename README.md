@@ -7,4 +7,4 @@ https://www.overleaf.com/read/jxsrmbdhnskt
 
 
 Final Poster Link:
-https://drive.google.com/file/d/1Q1kmZEXbNucsBxfxEQRbMG4Rdltc2W_E/view?usp=sharing
+https://docs.google.com/presentation/d/1RIaq3hC0dXRFaxJ_XPyNTmHE0jBYk6YWFXFKVlt8AUg/edit?usp=sharing
