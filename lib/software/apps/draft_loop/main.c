@@ -29,8 +29,16 @@
 
 #include "pixy2_spi.h"
 #include "pid.h"
-
-
+//==============================================================================
+//State Encoding and Varaibles
+//==============================================================================
+enum STATES {
+  DRIVING = 0xA,
+  RESTING = 0xB,
+  SEARCHING = 0xC
+};
+enum STATES STATE;
+//==============================================================================
 void check_status(int8_t code, const char *label) {
   //if (code < -1)
     printf("%s failed with %d\n", label, code);
@@ -197,5 +205,6 @@ int main(void) {
     //printf("%d\n", getVersion(pixy));
     //print_version(pixy->version);
     loop();
+    //
   }
 }
