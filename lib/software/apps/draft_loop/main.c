@@ -301,12 +301,13 @@ int main(void) {
 	    }
             lsm9ds1_stop_gyro_integration();
 	  }
-          else if (panOffset > 20)
+          else if (panOffset > 20) {
             lsm9ds1_start_gyro_integration();
 	    while (lsm9ds1_read_gyro_integration().z_axis <= 15) {
               kobukiDriveDirect(-40, 40); // positive degrees of rotation
 	    }
             lsm9ds1_stop_gyro_integration();
+	  }
           else
             kobukiDriveDirect(-40, -40);
 
