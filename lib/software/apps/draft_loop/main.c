@@ -44,6 +44,13 @@
 // enum STATES STATE;
 //==============================================================================
 
+typedef enum {
+  OFF,
+  DRIVING
+} robot_state_t;
+
+robot_state_t state = OFF;
+
 void check_status(int8_t code, const char *label) {
   //if (code < -1)
     printf("%s failed with %d\n", label, code);
@@ -134,6 +141,18 @@ block_t *trackBlock(int8_t index) {
 
 
 void loop() {
+  switch(state) {
+    case OFF: {
+      if (is_button_pressed(&sensors))
+        state = DRIVING;
+      break;
+    }	  
+    case DRIVING: {
+    if (is_button_pressed(&sensors)) {
+        state = OFF;
+	break;
+    }
+	
   //printf("FPS %d\n", getFPS(pixy));
 
   // get active blocks from Pixy
@@ -189,12 +208,16 @@ void loop() {
   }
   return;
 
+  break;
+    }
+
   stop:
     //printf("here\n");
     pid_reset(&rotateLoop);
     pid_reset(&translateLoop);
     kobukiDriveDirect(0, 0);
     focusIndex = -1;
+  }
 }
 
 
