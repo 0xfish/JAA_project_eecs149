@@ -45,8 +45,8 @@ typedef enum {
   REACHED = 0xF,
   RETURN = 0x0
 } STATES ;
-// set init state
 STATES STATE = AWAITING;
+// set init state
 
 
 nrf_drv_spi_t spi_instance = NRF_DRV_SPI_INSTANCE(1);
@@ -269,9 +269,9 @@ int main(void) {
       float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
       int8_t blocks = getBlocks(pixy, false, CCC_SIG_ALL, CCC_MAX_BLOCKS);
       display_write("SCANNING", DISPLAY_LINE_0);
-      float dist_trav;
-      snprintf(dist_trav, sizeof(angle), "angle: %f", angle);
-      display_write(dist_trav, DISPLAY_LINE_1);
+      char * angle_trav;
+      snprintf(angle_trav, 16, "angle: %f", angle);
+      display_write(angle_trav, DISPLAY_LINE_1);
 
       kobukiDriveDirect(-40, 40);
       if (blocks <= 0 && angle < 360) {
