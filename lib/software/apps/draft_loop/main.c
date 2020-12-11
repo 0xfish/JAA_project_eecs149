@@ -81,6 +81,8 @@ void check_status(int8_t code, const char *label) {
 }
 /*Initializes SPI and Pixy hardware.*/
 void setup() {
+  //BLE setup
+  setup_ble(&STATE);
   // initialize RTT library
   APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
   NRF_LOG_DEFAULT_BACKENDS_INIT();
@@ -226,15 +228,15 @@ int main(void) {
 
     /*FSM assumes no obstacles or distance limits.*/
     switch(STATE) {
-      case AWAITING:
+      case AWAITING: {
         kobukiDriveDirect(0,0);
         in_scan = false;
         break;
-
+      }
       /*Rotates 360 looking for at least 1 block. If it finds at least blocks
       it moves into its general direction. Otherwise it goes to explore.
       Default case is to go back into AWAITING.*/
-      case SCAN:
+      case SCAN: {
 
       if(in_scan) {
         in_scan = true;
@@ -257,10 +259,11 @@ int main(void) {
         lsm9ds1_stop_gyro_integration();
       }
         break;
+      }
       /*Drives forward for 0.5m then goes back to scanning. Assumes a non-de-
       terministic direction to drive in, since scan will randomly position
       the direction of the ROMI.*/
-      case EXPLORE:
+      case EXPLORE: {
         uint16_t curr_encoder = sensors.leftWheelEncoder;
         float value = measure_distance(curr_encoder, last_encoder);
         distance_traveled += value;
@@ -272,16 +275,21 @@ int main(void) {
           kobukiDriveDirect(0,0);
         }
         break;
+      }
       /*Drives towards object. Assumes no distance sensor for now.*/
-      case MOVE:
+      case MOVE: {
         STATE = EXPLORE;
         break;
-      case AVOID:
+      }
+      case AVOID: {
         break;
-      case REACHED:
+      }
+      case REACHED: {
         break;
-      case RETURN:
+      }
+      case RETURN: {
         break;
+      }
     }
 
 

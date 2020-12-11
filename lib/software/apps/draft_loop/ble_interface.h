@@ -44,4 +44,4 @@ static simple_ble_char_t driving_state_char = {.uuid16 = 0x6C71};
 
 
 /*Initializes the BLE for the ROMI.*/
-void setup_ble(enum *STATES st);
+void setup_ble(enum STATES *st);
