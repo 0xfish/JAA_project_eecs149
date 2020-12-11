@@ -269,7 +269,10 @@ int main(void) {
       float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
       int8_t blocks = getBlocks(pixy, false, CCC_SIG_ALL, CCC_MAX_BLOCKS);
       display_write("SCANNING", DISPLAY_LINE_0);
-      display_float(angle);
+      float dist_trav;
+      snprintf(dist_trav, sizeof(angle), "angle: %f", angle);
+      display_write(dist_trav, DISPLAY_LINE_1);
+
       kobukiDriveDirect(-40, 40);
       if (blocks <= 0 && angle < 360) {
         kobukiDriveDirect(-40, 40);
