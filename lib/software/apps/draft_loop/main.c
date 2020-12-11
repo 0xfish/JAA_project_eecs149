@@ -282,39 +282,18 @@ int main(void) {
       case MOVE: {
         // get active blocks from Pixy
         int8_t blocks = getBlocks(pixy, false, CCC_SIG_ALL, CCC_MAX_BLOCKS);
-        //printf("here\n");
-
-        //check_status(blocks, "blocks");
-        //if (blocks <= 0)
-          //printf("here\n");
-          //goto stop;
-
         block_t *block;
-        //if (focusIndex == -1) { // search....
-          //printf("Searching for block...\n");
         focusIndex = acquireBlock(); // brought this over 2 to the left
-          //if (focusIndex >= 0)
-            //printf("Found block!\n");
-        //}
         if (focusIndex != -1) // If we've found a block, find it, track it
            block = trackBlock(focusIndex);
-
+	//
         // If we're able to track it, move motors
         if (block != NULL) {
           // calculate pan and tilt "errors" with respect to first object (blocks[0]),
           // which is the biggest object (they are sorted by size).
           int32_t panOffset = (int32_t)pixy->frameWidth/2 - (int32_t)block->m_x;
-          int32_t tiltOffset = (int32_t)block->m_y - (int32_t)pixy->frameHeight/2;
-
-          // update loops
-          pid_update(&rotateLoop, panOffset);
-          pid_update(&translateLoop, -tiltOffset);
-
-          // calculate left and right wheel velocities based on rotation and translation velocities
-          int8_t left = -rotateLoop.m_command + translateLoop.m_command;
-          int8_t right = rotateLoop.m_command + translateLoop.m_command;
-
-          // set wheel speeds
+	  //
+          // adjust accordingly
           if (panOffset < -20)
             kobukiDriveDirect(40, -40);
           else if (panOffset > 20)
@@ -322,26 +301,10 @@ int main(void) {
           else
             kobukiDriveDirect(-40, -40);
 
-          //printf("sig: %u area: %u age: %u offset: %ld numBlocks: %d\n",
-          //block->m_signature, block->m_width * block->m_height, block->m_age, panOffset, pixy->numBlocks);
-//#if 0 // for debugging
- //         printf("%ld %ld %ld %ld", rotateLoop.m_command, translateLoop.m_command, left, right);
-//#endif
-
         // no object detected, go into reset state
         } else {
           focusIndex = -1;
-          //goto stop;
         }
-        //return;
-
-        //stop:
-          //printf("here\n");
-          //pid_reset(&rotateLoop);
-          //pid_reset(&translateLoop);
-          //kobukiDriveDirect(-40, -40);
-          //focusIndex = -1;
-        //STATE = EXPLORE;
         break;
       }
       case AVOID: {
