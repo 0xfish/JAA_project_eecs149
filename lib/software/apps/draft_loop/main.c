@@ -46,6 +46,8 @@ enum STATES {
   RETURN = 0x0
 };
 enum STATES STATE;
+// set init state
+STATE = AWAITING;
 
 nrf_drv_spi_t spi_instance = NRF_DRV_SPI_INSTANCE(1);
 nrf_drv_spi_config_t spi_config = {
