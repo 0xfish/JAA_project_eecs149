@@ -49,7 +49,7 @@ STATES STATE = AWAITING;
 // set init state
 //LCD setup
 // initialize display
-nrf_drv_spi_t spi_LCD_instance = NRF_DRV_SPI_INSTANCE(1);
+nrf_drv_spi_t spi_LCD_instance = NRF_DRV_SPI_INSTANCE(2);
 nrf_drv_spi_config_t spi_LCD_config = {
   .sck_pin = BUCKLER_LCD_SCLK,
   .mosi_pin = BUCKLER_LCD_MOSI,
