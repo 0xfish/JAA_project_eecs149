@@ -284,18 +284,18 @@ int main(void) {
         int8_t blocks = getBlocks(pixy, false, CCC_SIG_ALL, CCC_MAX_BLOCKS);
         //printf("here\n");
 
-        check_status(blocks, "blocks");
-        if (blocks <= 0)
+        //check_status(blocks, "blocks");
+        //if (blocks <= 0)
           //printf("here\n");
-          goto stop;
+          //goto stop;
 
-        block_t *block;
-        if (focusIndex == -1) { // search....
-          printf("Searching for block...\n");
-          focusIndex = acquireBlock();
-          if (focusIndex >= 0)
-            printf("Found block!\n");
-        }
+        //block_t *block;
+        //if (focusIndex == -1) { // search....
+          //printf("Searching for block...\n");
+        focusIndex = acquireBlock(); // brought this over 2 to the left
+          //if (focusIndex >= 0)
+            //printf("Found block!\n");
+        //}
         if (focusIndex != -1) // If we've found a block, find it, track it
            block = trackBlock(focusIndex);
 
@@ -322,24 +322,25 @@ int main(void) {
           else
             kobukiDriveDirect(-40, -40);
 
-          printf("sig: %u area: %u age: %u offset: %ld numBlocks: %d\n",
-          block->m_signature, block->m_width * block->m_height, block->m_age, panOffset, pixy->numBlocks);
-#if 0 // for debugging
-          printf("%ld %ld %ld %ld", rotateLoop.m_command, translateLoop.m_command, left, right);
-#endif
+          //printf("sig: %u area: %u age: %u offset: %ld numBlocks: %d\n",
+          //block->m_signature, block->m_width * block->m_height, block->m_age, panOffset, pixy->numBlocks);
+//#if 0 // for debugging
+ //         printf("%ld %ld %ld %ld", rotateLoop.m_command, translateLoop.m_command, left, right);
+//#endif
 
         // no object detected, go into reset state
         } else {
-          goto stop;
-        }
-        return;
-
-        stop:
-          //printf("here\n");
-          pid_reset(&rotateLoop);
-          pid_reset(&translateLoop);
-          kobukiDriveDirect(-40, -40);
           focusIndex = -1;
+          //goto stop;
+        }
+        //return;
+
+        //stop:
+          //printf("here\n");
+          //pid_reset(&rotateLoop);
+          //pid_reset(&translateLoop);
+          //kobukiDriveDirect(-40, -40);
+          //focusIndex = -1;
         //STATE = EXPLORE;
         break;
       }
