@@ -49,12 +49,25 @@ typedef enum {
 STATES STATE = AWAITING;
 
 
-nrf_drv_spi_t spi_instance = NRF_DRV_SPI_INSTANCE(1);
-nrf_drv_spi_config_t spi_config = {
+nrf_drv_spi_t pixy_spi_instance = NRF_DRV_SPI_INSTANCE(1);
+nrf_drv_spi_config_t pixy_spi_config = {
   .sck_pin = BUCKLER_SD_SCLK,
   .mosi_pin = BUCKLER_SD_MOSI,
   .miso_pin = BUCKLER_SD_MISO,
   .ss_pin = BUCKLER_SD_CS,
+  .irq_priority = NRFX_SPI_DEFAULT_CONFIG_IRQ_PRIORITY,
+  .orc = 0,
+  .frequency = NRF_DRV_SPI_FREQ_4M,
+  .mode = NRF_DRV_SPI_MODE_3,
+  .bit_order = NRF_DRV_SPI_BIT_ORDER_MSB_FIRST
+};
+
+nrf_drv_spi_t lcd_spi_instance = NRF_DRV_SPI_INSTANCE(2);
+nrf_drv_spi_config_t lcd_spi_config = {
+  .sck_pin = BUCKLER_LCD_SCLK,
+  .mosi_pin = BUCKLER_LCD_MOSI,
+  .miso_pin = BUCKLER_LCD_MISO,
+  .ss_pin = BUCKLER_LCD_CS,
   .irq_priority = NRFX_SPI_DEFAULT_CONFIG_IRQ_PRIORITY,
   .orc = 0,
   .frequency = NRF_DRV_SPI_FREQ_4M,
@@ -78,7 +91,7 @@ static float distance_traveled = 0.0;
 //==============================================================================
 /*Prints Error Messages.*/
 void check_status(int8_t code, const char *label) {
-  //if (code < -1)
+  if (code < 0)
     printf("%s failed with %d\n", label, code);
 }
 /*Initializes SPI and Pixy hardware.*/
@@ -99,11 +112,14 @@ void setup() {
   printf("IMU initialized!\n");
 
   // initialize spi master
-  APP_ERROR_CHECK(nrf_drv_spi_init(&spi_instance, &spi_config, NULL, NULL));
+  APP_ERROR_CHECK(nrf_drv_spi_init(&pixy_spi_instance, &pixy_spi_config, NULL, NULL));
+  APP_ERROR_CHECK(nrf_drv_spi_init(&lcd_spi_instance, &lcd_spi_config, NULL, NULL));
   nrf_delay_ms(10);
 
+  display_init(&lcd_spi_instance);
+
   // We need to initialize the pixy object
-  check_status(pixy_init(&pixy, &spi_instance), "initialize");
+  check_status(pixy_init(&pixy, &pixy_spi_instance), "initialize");
   print_version(pixy->version);
   nrf_delay_ms(10);
 
@@ -207,7 +223,8 @@ void loop() {
     kobukiDriveDirect(0, 0);
     focusIndex = -1;
 }
-/*Measures distance from the encoder.*/
+
+/* Measures distance from the encoder. */
 static float measure_distance(uint16_t current_encoder,
                               uint16_t previous_encoder) {
   const float CONVERSION = 0.0006108;
@@ -225,13 +242,14 @@ int main(void) {
   bool in_scan = false;
 
   while (1) {
-
     kobukiSensorPoll(&sensors);
 
-    /*FSM assumes no obstacles or distance limits.*/
+    /* FSM assumes no obstacles or distance limits.*/
+
     switch(STATE) {
       case AWAITING: {
-        kobukiDriveDirect(0,0);
+        display_write("AWAITING", DISPLAY_LINE_0);
+        kobukiDriveDirect(0, 0);
         in_scan = false;
         break;
       }
@@ -239,33 +257,35 @@ int main(void) {
       it moves into its general direction. Otherwise it goes to explore.
       Default case is to go back into AWAITING.*/
       case SCAN: {
+        display_write("SCAN", DISPLAY_LINE_0);
+        if(!in_scan) {
+          in_scan = true;
+          lsm9ds1_start_gyro_integration();
+        }
 
-      if(!in_scan) {
-        in_scan = true;
-        lsm9ds1_start_gyro_integration();
-      }
-      // get active blocks from Pixy
-      float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
-      int8_t blocks = getBlocks(pixy, false, CCC_SIG_ALL, CCC_MAX_BLOCKS);
+        // get active blocks from Pixy
+        float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
+        int8_t blocks = getBlocks(pixy, false, CCC_SIG_ALL, CCC_MAX_BLOCKS);
 
-      if (blocks <= 0 && angle < 360) {
-        kobukiDriveDirect(-40, 40);
-      } else if (blocks <= 0 && angle > 360) {
-        STATE = EXPLORE;
-        lsm9ds1_stop_gyro_integration();
-      } else if (blocks > 0) {
-        STATE = MOVE;
-        lsm9ds1_stop_gyro_integration();
-      } else {
-        STATE = AWAITING;
-        lsm9ds1_stop_gyro_integration();
-      }
+        if (blocks <= 0 && angle < 360) {
+          kobukiDriveDirect(-40, 40);
+        } else if (blocks <= 0 && angle > 360) {
+          STATE = EXPLORE;
+          lsm9ds1_stop_gyro_integration();
+        } else if (blocks > 0) {
+          STATE = MOVE;
+          lsm9ds1_stop_gyro_integration();
+        } else {
+          STATE = AWAITING;
+          lsm9ds1_stop_gyro_integration();
+        }
         break;
       }
       /*Drives forward for 0.5m then goes back to scanning. Assumes a non-de-
       terministic direction to drive in, since scan will randomly position
       the direction of the ROMI.*/
       case EXPLORE: {
+        display_write("EXPLORE", DISPLAY_LINE_0);
         uint16_t curr_encoder = sensors.leftWheelEncoder;
         float value = measure_distance(curr_encoder, last_encoder);
         distance_traveled += value;
@@ -278,21 +298,23 @@ int main(void) {
         }
         break;
       }
+
       /*Drives towards object. Assumes no distance sensor for now.*/
       case MOVE: {
+        display_write("MOVE", DISPLAY_LINE_0);
         // get active blocks from Pixy
         int8_t blocks = getBlocks(pixy, false, CCC_SIG_ALL, CCC_MAX_BLOCKS);
         block_t *block;
         focusIndex = acquireBlock(); // brought this over 2 to the left
         if (focusIndex != -1) // If we've found a block, find it, track it
            block = trackBlock(focusIndex);
-	//
+
         // If we're able to track it, move motors
         if (block != NULL) {
           // calculate pan and tilt "errors" with respect to first object (blocks[0]),
           // which is the biggest object (they are sorted by size).
           int32_t panOffset = (int32_t)pixy->frameWidth/2 - (int32_t)block->m_x;
-	  //
+
           // adjust accordingly
           if (panOffset < -20)
             kobukiDriveDirect(-40, -50);
@@ -307,18 +329,18 @@ int main(void) {
         }
         break;
       }
+
       case AVOID: {
         break;
       }
+
       case REACHED: {
         break;
       }
+
       case RETURN: {
         break;
       }
     }
-
-
-    //
   }
 }
