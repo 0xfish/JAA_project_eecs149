@@ -45,8 +45,8 @@ typedef enum {
   REACHED = 0xF,
   RETURN = 0x0
 } STATES ;
-STATES STATE = AWAITING;
 // set init state
+STATES STATE = AWAITING;
 
 
 nrf_drv_spi_t spi_instance = NRF_DRV_SPI_INSTANCE(1);
