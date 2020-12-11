@@ -185,7 +185,7 @@ void loop() {
     else 
       kobukiDriveDirect(-40, -40);
       if ((acount >= 10) || (bcount >= 10)) {
-        nrf_delay_ms(1000);
+        nrf_delay_ms(300);
         acount = 0;
         bcount = 0;
       }
