@@ -36,7 +36,7 @@
 //==============================================================================
 //State Encoding and Varaibles
 //==============================================================================
-enum STATES {
+typedef enum {
   AWAITING = 0xA,
   SCAN = 0xB,
   EXPLORE = 0xC,
@@ -44,10 +44,10 @@ enum STATES {
   AVOID = 0xE,
   REACHED = 0xF,
   RETURN = 0x0
-};
-enum STATES STATE;
+} STATES ;
+STATES STATE = AWAITING;
 // set init state
-STATE = AWAITING;
+
 
 nrf_drv_spi_t spi_instance = NRF_DRV_SPI_INSTANCE(1);
 nrf_drv_spi_config_t spi_config = {
