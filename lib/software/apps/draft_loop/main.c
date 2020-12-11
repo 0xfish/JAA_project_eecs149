@@ -148,7 +148,7 @@ void loop() {
       break;
     }	  
     case DRIVING: {
-    if (!is_button_pressed(&sensors)) {
+    if (is_button_pressed(&sensors)) {
         state = OFF;
 	break;
     }
