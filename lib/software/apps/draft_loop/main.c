@@ -47,7 +47,29 @@ typedef enum {
 } STATES ;
 STATES STATE = AWAITING;
 // set init state
+//LCD setup
+// initialize display
+nrf_drv_spi_t spi_LCD_instance = NRF_DRV_SPI_INSTANCE(1);
+nrf_drv_spi_config_t spi_LCD_config = {
+  .sck_pin = BUCKLER_LCD_SCLK,
+  .mosi_pin = BUCKLER_LCD_MOSI,
+  .miso_pin = BUCKLER_LCD_MISO,
+  .ss_pin = BUCKLER_LCD_CS,
+  .irq_priority = NRFX_SPI_DEFAULT_CONFIG_IRQ_PRIORITY,
+  .orc = 0,
+  .frequency = NRF_DRV_SPI_FREQ_4M,
+  .mode = NRF_DRV_SPI_MODE_2,
+  .bit_order = NRF_DRV_SPI_BIT_ORDER_MSB_FIRST
+};
 
+ret_code_t error_code = nrf_drv_spi_init(&spi_LCD_instance, &spi_LCD_config, NULL, NULL);
+APP_ERROR_CHECK(error_code);
+display_init(&spi_LCD_instance);
+display_write("Hello, Human!", DISPLAY_LINE_0);
+
+// initialize RTT library
+APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
+NRF_LOG_DEFAULT_BACKENDS_INIT();
 
 nrf_drv_spi_t spi_instance = NRF_DRV_SPI_INSTANCE(1);
 nrf_drv_spi_config_t spi_config = {
@@ -85,29 +107,7 @@ void check_status(int8_t code, const char *label) {
 void setup() {
   //BLE setup
   setup_ble(&STATE);
-  //LCD setup
-  // initialize display
-  nrf_drv_spi_t spi_LCD_instance = NRF_DRV_SPI_INSTANCE(1);
-  nrf_drv_spi_config_t spi_LCD_config = {
-    .sck_pin = BUCKLER_LCD_SCLK,
-    .mosi_pin = BUCKLER_LCD_MOSI,
-    .miso_pin = BUCKLER_LCD_MISO,
-    .ss_pin = BUCKLER_LCD_CS,
-    .irq_priority = NRFX_SPI_DEFAULT_CONFIG_IRQ_PRIORITY,
-    .orc = 0,
-    .frequency = NRF_DRV_SPI_FREQ_4M,
-    .mode = NRF_DRV_SPI_MODE_2,
-    .bit_order = NRF_DRV_SPI_BIT_ORDER_MSB_FIRST
-  };
 
-  ret_code_t error_code = nrf_drv_spi_init(&spi_LCD_instance, &spi_LCD_config, NULL, NULL);
-  APP_ERROR_CHECK(error_code);
-  display_init(&spi_LCD_instance);
-  display_write("Hello, Human!", DISPLAY_LINE_0);
-
-  // initialize RTT library
-  APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
-  NRF_LOG_DEFAULT_BACKENDS_INIT();
 
   // initialize i2c master (two wire interface)
   nrf_drv_twi_config_t i2c_config = NRF_DRV_TWI_DEFAULT_CONFIG;
