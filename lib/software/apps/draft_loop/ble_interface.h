@@ -12,11 +12,14 @@
 //State Encoding and Varaibles
 //==============================================================================
 enum STATES {
-  DRIVING = 0xA,
-  RESTING = 0xB,
-  SEARCHING = 0xC
+  AWAITING = 0xA,
+  SCAN = 0xB,
+  EXPLORE = 0xC,
+  MOVE = 0xD,
+  AVOID = 0xE,
+  REACHED = 0xF,
+  RETURN = 0x0
 };
-static enum STATES state;
 //==============================================================================
 
 // Intervals for advertising and connections
@@ -41,4 +44,4 @@ static simple_ble_char_t driving_state_char = {.uuid16 = 0x6C71};
 
 
 /*Initializes the BLE for the ROMI.*/
-void setup_ble();
+void setup_ble(enum *STATES st);

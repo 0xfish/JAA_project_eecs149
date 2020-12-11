@@ -36,19 +36,16 @@
 //==============================================================================
 //State Encoding and Varaibles
 //==============================================================================
-// enum STATES {
-//   DRIVING = 0xA,
-//   RESTING = 0xB,
-//   SEARCHING = 0xC
-// };
-// enum STATES STATE;
-//==============================================================================
-
-void check_status(int8_t code, const char *label) {
-  //if (code < -1)
-    printf("%s failed with %d\n", label, code);
-}
-
+enum STATES {
+  AWAITING = 0xA,
+  SCAN = 0xB,
+  EXPLORE = 0xC,
+  MOVE = 0xD,
+  AVOID = 0xE,
+  REACHED = 0xF,
+  RETURN = 0x0
+};
+enum STATES STATE;
 
 nrf_drv_spi_t spi_instance = NRF_DRV_SPI_INSTANCE(1);
 nrf_drv_spi_config_t spi_config = {
@@ -71,7 +68,18 @@ pid_loop_t rotateLoop, translateLoop;
 int8_t focusIndex;
 KobukiSensors_t sensors = {0};
 
-
+/*Encoders and distance variables.*/
+static uint16_t last_encoder = 0;
+static float distance_traveled = 0.0;
+//==============================================================================
+//Functions
+//==============================================================================
+/*Prints Error Messages.*/
+void check_status(int8_t code, const char *label) {
+  //if (code < -1)
+    printf("%s failed with %d\n", label, code);
+}
+/*Initializes SPI and Pixy hardware.*/
 void setup() {
   // initialize RTT library
   APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
@@ -108,7 +116,6 @@ void setup() {
   kobukiInit();
 }
 
-
 // Take the biggest block (blocks[0]) that's been around for at least 30 frames (1/2 second)
 // and return its index, otherwise return -1
 int16_t acquireBlock() {
@@ -131,8 +138,7 @@ block_t *trackBlock(int8_t index) {
 
   return NULL;
 }
-
-
+/*Test loop for pixy.*/
 void loop() {
   //printf("FPS %d\n", getFPS(pixy));
 
@@ -178,7 +184,8 @@ void loop() {
     else
       kobukiDriveDirect(0, 0);
 
-    printf("sig: %u area: %u age: %u offset: %ld numBlocks: %d\n", block->m_signature, block->m_width * block->m_height, block->m_age, panOffset, pixy->numBlocks);
+    printf("sig: %u area: %u age: %u offset: %ld numBlocks: %d\n",
+    block->m_signature, block->m_width * block->m_height, block->m_age, panOffset, pixy->numBlocks);
 #if 0 // for debugging
     printf("%ld %ld %ld %ld", rotateLoop.m_command, translateLoop.m_command, left, right);
 #endif
@@ -196,22 +203,88 @@ void loop() {
     kobukiDriveDirect(0, 0);
     focusIndex = -1;
 }
+/*Measures distance from the encoder.*/
+static float measure_distance(uint16_t current_encoder,
+                              uint16_t previous_encoder) {
+  const float CONVERSION = 0.0006108;
+  uint16_t ticks = current_encoder >= previous_encoder
+    ? current_encoder - previous_encoder
+    : current_encoder + (UINT16_MAX - previous_encoder);
+  return CONVERSION * ticks;
+}
 
-
+//==============================================================================
 
 int main(void) {
   //printf("here\n");
   setup();
+  bool in_scan = false;
 
   while (1) {
-    // read sensors from robot
-    //printf("here\n");
+
     kobukiSensorPoll(&sensors);
-    //printf("%d\n", getVersion(pixy));
-    //print_version(pixy->version);
-    loop();
-    //kobukiDriveDirect(-40, 40);
-    
+
+    /*FSM assumes no obstacles or distance limits.*/
+    switch(STATE) {
+      case AWAITING:
+        kobukiDriveDirect(0,0);
+        in_scan = false;
+        break;
+
+      /*Rotates 360 looking for at least 1 block. If it finds at least blocks
+      it moves into its general direction. Otherwise it goes to explore.
+      Default case is to go back into AWAITING.*/
+      case SCAN:
+
+      if(in_scan) {
+        in_scan = true;
+        lsm9ds1_start_gyro_integration();
+      }
+      // get active blocks from Pixy
+      float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
+      int8_t blocks = getBlocks(pixy, false, CCC_SIG_ALL, CCC_MAX_BLOCKS);
+
+      if (blocks <= 0 && angle < 360) {
+        kobukiDriveDirect(-40, 40);
+      } else if (blocks <= 0 && angle > 360) {
+        STATE = EXPLORE;
+        lsm9ds1_stop_gyro_integration();
+      } else if (blocks > 0) {
+        STATE = MOVE;
+        lsm9ds1_stop_gyro_integration();
+      } else {
+        STATE = AWAITING;
+        lsm9ds1_stop_gyro_integration();
+      }
+        break;
+      /*Drives forward for 0.5m then goes back to scanning. Assumes a non-de-
+      terministic direction to drive in, since scan will randomly position
+      the direction of the ROMI.*/
+      case EXPLORE:
+        uint16_t curr_encoder = sensors.leftWheelEncoder;
+        float value = measure_distance(curr_encoder, last_encoder);
+        distance_traveled += value;
+        last_encoder = curr_encoder;
+        kobukiDriveDirect(40, 40);
+        if (distance_traveled >= 0.5) {
+          STATE = SCAN;
+          distance_traveled = 0.0;
+          kobukiDriveDirect(0,0);
+        }
+        break;
+      /*Drives towards object. Assumes no distance sensor for now.*/
+      case MOVE:
+        STATE = EXPLORE;
+        break;
+      case AVOID:
+        break;
+      case REACHED:
+        break;
+      case RETURN:
+        break;
+    }
+
+
     //
   }
 }
