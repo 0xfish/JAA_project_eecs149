@@ -240,7 +240,7 @@ int main(void) {
       Default case is to go back into AWAITING.*/
       case SCAN: {
 
-      if(in_scan) {
+      if(!in_scan) {
         in_scan = true;
         lsm9ds1_start_gyro_integration();
       }
