@@ -85,6 +85,26 @@ void check_status(int8_t code, const char *label) {
 void setup() {
   //BLE setup
   setup_ble(&STATE);
+  //LCD setup
+  // initialize display
+  nrf_drv_spi_t spi_LCD_instance = NRF_DRV_SPI_INSTANCE(1);
+  nrf_drv_spi_config_t spi_LCD_config = {
+    .sck_pin = BUCKLER_LCD_SCLK,
+    .mosi_pin = BUCKLER_LCD_MOSI,
+    .miso_pin = BUCKLER_LCD_MISO,
+    .ss_pin = BUCKLER_LCD_CS,
+    .irq_priority = NRFX_SPI_DEFAULT_CONFIG_IRQ_PRIORITY,
+    .orc = 0,
+    .frequency = NRF_DRV_SPI_FREQ_4M,
+    .mode = NRF_DRV_SPI_MODE_2,
+    .bit_order = NRF_DRV_SPI_BIT_ORDER_MSB_FIRST
+  };
+
+  ret_code_t error_code = nrf_drv_spi_init(&spi_LCD_instance, &spi_LCD_config, NULL, NULL);
+  APP_ERROR_CHECK(error_code);
+  display_init(&spi_LCD_instance);
+  display_write("Hello, Human!", DISPLAY_LINE_0);
+
   // initialize RTT library
   APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
   NRF_LOG_DEFAULT_BACKENDS_INIT();
@@ -231,6 +251,7 @@ int main(void) {
     /*FSM assumes no obstacles or distance limits.*/
     switch(STATE) {
       case AWAITING: {
+        display_write("AWAITING", DISPLAY_LINE_0);
         kobukiDriveDirect(0,0);
         in_scan = false;
         break;
@@ -239,7 +260,7 @@ int main(void) {
       it moves into its general direction. Otherwise it goes to explore.
       Default case is to go back into AWAITING.*/
       case SCAN: {
-
+        display_write("SCANNING", DISPLAY_LINE_0);
       if(in_scan) {
         in_scan = true;
         lsm9ds1_start_gyro_integration();
@@ -247,7 +268,9 @@ int main(void) {
       // get active blocks from Pixy
       float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
       int8_t blocks = getBlocks(pixy, false, CCC_SIG_ALL, CCC_MAX_BLOCKS);
-
+      display_write("SCANNING", DISPLAY_LINE_0);
+      display_float(angle);
+      kobukiDriveDirect(-40, 40);
       if (blocks <= 0 && angle < 360) {
         kobukiDriveDirect(-40, 40);
       } else if (blocks <= 0 && angle > 360) {
@@ -266,11 +289,12 @@ int main(void) {
       terministic direction to drive in, since scan will randomly position
       the direction of the ROMI.*/
       case EXPLORE: {
+        display_write("EXPLORING", DISPLAY_LINE_0);
         uint16_t curr_encoder = sensors.leftWheelEncoder;
         float value = measure_distance(curr_encoder, last_encoder);
         distance_traveled += value;
         last_encoder = curr_encoder;
-        kobukiDriveDirect(40, 40);
+        kobukiDriveDirect(-40, -40);
         if (distance_traveled >= 0.5) {
           STATE = SCAN;
           distance_traveled = 0.0;
@@ -280,6 +304,7 @@ int main(void) {
       }
       /*Drives towards object. Assumes no distance sensor for now.*/
       case MOVE: {
+        display_write("MOVING", DISPLAY_LINE_0);
         STATE = EXPLORE;
         break;
       }
