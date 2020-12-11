@@ -294,20 +294,10 @@ int main(void) {
           int32_t panOffset = (int32_t)pixy->frameWidth/2 - (int32_t)block->m_x;
 	  //
           // adjust accordingly
-          if (panOffset < -20) {
-            lsm9ds1_start_gyro_integration();
-	    while (lsm9ds1_read_gyro_integration().z_axis <= -15) {
-              kobukiDriveDirect(40, -40); // positive degrees of rotation
-	    }
-            lsm9ds1_stop_gyro_integration();
-	  }
-          else if (panOffset > 20) {
-            lsm9ds1_start_gyro_integration();
-	    while (lsm9ds1_read_gyro_integration().z_axis <= 15) {
-              kobukiDriveDirect(-40, 40); // positive degrees of rotation
-	    }
-            lsm9ds1_stop_gyro_integration();
-	  }
+          if (panOffset < -20)
+            kobukiDriveDirect(40, -40);
+          else if (panOffset > 20)
+            kobukiDriveDirect(-40, 40);
           else
             kobukiDriveDirect(-40, -40);
 
