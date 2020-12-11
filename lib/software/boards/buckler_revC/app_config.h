@@ -3,10 +3,6 @@
 
 #pragma once
 
-#define SPI2_ENABLED 1
-#define NRFX_SPI2_ENABLED 1
-#define NRFX_SPIM2_ENABLED 1
-
 #define SIMPLE_BLE_ENABLED 1
 
 #define BLE_ADVERTISING_ENABLED 1
