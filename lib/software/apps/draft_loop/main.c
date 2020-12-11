@@ -295,9 +295,9 @@ int main(void) {
 	  //
           // adjust accordingly
           if (panOffset < -20)
-            kobukiDriveDirect(20, -40);
+            kobukiDriveDirect(40, -60);
           else if (panOffset > 20)
-            kobukiDriveDirect(-40, 20);
+            kobukiDriveDirect(-60, 40);
           else
             kobukiDriveDirect(-40, -40);
 
