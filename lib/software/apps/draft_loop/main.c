@@ -280,7 +280,8 @@ int main(void) {
       }
       /*Drives towards object. Assumes no distance sensor for now.*/
       case MOVE: {
-        STATE = EXPLORE;
+	kobukiDriveDirect(-40, -40);
+        //STATE = EXPLORE;
         break;
       }
       case AVOID: {
