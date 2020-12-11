@@ -289,7 +289,7 @@ int main(void) {
           //printf("here\n");
           //goto stop;
 
-        //block_t *block;
+        block_t *block;
         //if (focusIndex == -1) { // search....
           //printf("Searching for block...\n");
         focusIndex = acquireBlock(); // brought this over 2 to the left
