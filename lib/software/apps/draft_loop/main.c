@@ -176,7 +176,7 @@ void loop() {
     else if (panOffset > 20)
       kobukiDriveDirect(-40, 40);
     else
-      kobukiDriveDirect(40, 40);
+      kobukiDriveDirect(-40, -40);
 
     printf("sig: %u area: %u age: %u offset: %ld numBlocks: %d\n", block->m_signature, block->m_width * block->m_height, block->m_age, panOffset, pixy->numBlocks);
 #if 0 // for debugging
