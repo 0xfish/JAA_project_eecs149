@@ -148,7 +148,7 @@ void loop() {
       break;
     }	  
     case DRIVING: {
-    if (is_button_pressed(&sensors)) {
+    if (!is_button_pressed(&sensors)) {
         state = OFF;
 	break;
     }
@@ -206,7 +206,7 @@ void loop() {
   } else {
     goto stop;
   }
-  return;
+  //return;
 
   break;
     }
@@ -217,6 +217,7 @@ void loop() {
     pid_reset(&translateLoop);
     kobukiDriveDirect(0, 0);
     focusIndex = -1;
+    break;
   }
 }
 
