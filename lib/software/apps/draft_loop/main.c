@@ -280,15 +280,7 @@ int main(void) {
       }
       /*Drives towards object. Assumes no distance sensor for now.*/
       case MOVE: {
-	//kobukiDriveDirect(-40, -40);
-    	int32_t panOffset = (int32_t)pixy->frameWidth/2 - (int32_t)block->m_x;
-    	int32_t tiltOffset = (int32_t)block->m_y - (int32_t)pixy->frameHeight/2;
-    	if (panOffset < -20)
-      	  kobukiDriveDirect(40, -40);
-    	else if (panOffset > 20)
-          kobukiDriveDirect(-40, 40);
-    	else
-          kobukiDriveDirect(-40, 40);
+	kobukiDriveDirect(-40, -40);
         //STATE = EXPLORE;
         break;
       }
