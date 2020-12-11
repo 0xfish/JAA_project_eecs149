@@ -174,19 +174,21 @@ void loop() {
     int8_t right = rotateLoop.m_command + translateLoop.m_command;
 
     // set wheel speeds
-    if (panOffset < -20)
+    if (panOffset < -20) {
       kobukiDriveDirect(40, -40);
       acount += 1;
-    else if (panOffset > 20)
+    }
+    else if (panOffset > 20) {
       kobukiDriveDirect(-40, 40);
       bcount +=1;
-    else
-      kobukiDriveDirect(-40, -40);
-    if ((acount >= 10) || (bcount >= 10)) {
-      nrf_delay_ms(100);
-      acount = 0;
-      bcount = 0;
     }
+    else 
+      kobukiDriveDirect(-40, -40);
+      if ((acount >= 10) || (bcount >= 10)) {
+        nrf_delay_ms(100);
+        acount = 0;
+        bcount = 0;
+      }
 
     printf("sig: %u area: %u age: %u offset: %ld numBlocks: %d\n", block->m_signature, block->m_width * block->m_height, block->m_age, panOffset, pixy->numBlocks);
 #if 0 // for debugging
