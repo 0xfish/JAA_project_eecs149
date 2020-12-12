@@ -86,6 +86,9 @@ KobukiSensors_t sensors = {0};
 /*Encoders and distance variables.*/
 static uint16_t last_encoder = 0;
 static float distance_traveled = 0.0;
+/*Control Signals.*/
+bool avoid_backup = false;
+bool avoid_move = false;
 //==============================================================================
 //Functions
 //==============================================================================
@@ -239,14 +242,15 @@ static float measure_distance(uint16_t current_encoder,
 int main(void) {
   //printf("here\n");
   setup();
+  setup_dist();
   bool in_scan = false;
 
   while (1) {
     kobukiSensorPoll(&sensors);
 
-    /* FSM assumes no obstacles or distance limits.*/
 
     switch(STATE) {
+      /*IDlE and RESET state,*/
       case AWAITING: {
         display_write("AWAITING", DISPLAY_LINE_0);
         kobukiDriveDirect(0, 0);
@@ -283,7 +287,10 @@ int main(void) {
       }
       /*Drives forward for 0.5m then goes back to scanning. Assumes a non-de-
       terministic direction to drive in, since scan will randomly position
-      the direction of the ROMI.*/
+      the direction of the ROMI.
+
+      It will also check to see if there is an object at least 10cm away from it
+      */
       case EXPLORE: {
         display_write("EXPLORE", DISPLAY_LINE_0);
         uint16_t curr_encoder = sensors.leftWheelEncoder;
@@ -291,6 +298,14 @@ int main(void) {
         distance_traveled += value;
         last_encoder = curr_encoder;
         kobukiDriveDirect(40, 40);
+        get_distance(&dist);
+        if (dist <= 10) {
+          STATE = AVOID;
+          avoid_move = false;
+          break;
+        }
+
+        }
         if (distance_traveled >= 0.5) {
           STATE = SCAN;
           distance_traveled = 0.0;
@@ -308,7 +323,14 @@ int main(void) {
         focusIndex = acquireBlock(); // brought this over 2 to the left
         if (focusIndex != -1) // If we've found a block, find it, track it
            block = trackBlock(focusIndex);
-
+        float dist;
+        //Detect if there is an object in front that is not the tracked block.
+        get_distance(&dist);
+        if (dist <=10 && focusIndex == -1) {
+          STATE = AVOID;
+          avoid_move = true;
+          break;
+        }
         // If we're able to track it, move motors
         if (block != NULL) {
           // calculate pan and tilt "errors" with respect to first object (blocks[0]),
@@ -329,9 +351,43 @@ int main(void) {
         }
         break;
       }
+      /*  2 Possible cases
+      1) The target is obscured by the obstacle
+      2) There is no target and only the obstacle
 
+      Assuming only case 1 for now. The romi will back up 0.5m, and then stop
+      and begin the gyro integration to turn either 45 degrees to the
+      left/right.
+
+      The next state will be determined by the control signal avoid_move. If
+      true then the next state will be move, otherwise it will be explore.
+      */
       case AVOID: {
-        break;
+        if (!avoid_backup) {
+        uint16_t curr_encoder = sensors.leftWheelEncoder;
+        float value = measure_distance(curr_encoder, last_encoder);
+        distance_traveled += value;
+        last_encoder = curr_encoder;
+        kobukiDriveDirect(40, 40);
+        if (distance_traveled >= 0.5) {
+          lsm9ds1_start_gyro_integration();
+          distance_traveled = 0.0;
+          kobukiDriveDirect(0,0);
+        }
+      } else {
+          float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
+          if (angle >= 45) {
+            lsm9ds1_stop_gyro_integration();
+            kobukiDriveDirect(0, 0);
+            if (avoid_move)
+              STATE = MOVE;
+              avoid_move = false;
+            else
+              STATE = EXPLORE;
+          } else
+            kobukiDriveDirect(-40, 40);
+        }
+      break;
       }
 
       case REACHED: {
