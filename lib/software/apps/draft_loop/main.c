@@ -36,6 +36,15 @@
 //==============================================================================
 //State Encoding and Varaibles
 //==============================================================================
+typedef struct {
+  float distance,
+  float angle,
+  bool turn,
+  bool linear
+} breadcrumb;
+static breadcrumb[100] bc_arr; //Be able to retrace 100 steps
+static uint32_t bc_counter = 0;
+/*Encoding for the BLE.*/
 typedef enum {
   AWAITING = 0xA,
   SCAN = 0xB,
@@ -94,8 +103,16 @@ bool reached_final = false;
 bool reached_left = false;
 bool reached_approach = false;
 bool reached_center = false;
-/*PID variables*/
-int32_t integral = 0;
+bool return_turning = false;
+bool return_action_done = false;
+/*PID variables
+he process of tuning the PID parameters (Kp, Ki and Kd) is a continuous trial
+and error process. There is no exact way to calculate the value for the
+parameters unless the whole system is mathematically modeled and simulated.
+*/
+int32_t integral = 0;//Accumaltes error over time.
+float Kp;//Can be used to set values;
+float Ki;
 //==============================================================================
 //Functions
 //==============================================================================
@@ -498,6 +515,52 @@ int main(void) {
       }
 
       case RETURN: {
+        if (bc_counter == 0) {
+          STATE = AWAITING;
+        } else {
+          if (bc_arr[bc_counter].turn) {
+            if(!return_turning) {
+              lsm9ds1_start_gyro_integration();
+              return_turning = true;
+            } else {
+              float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
+              if (bc_arr[bc_counter].angle < 0) {
+                if (angle >= fabs(bc_arr[bc_counter].angle)) {
+                  return_action_done = true;
+                  distance_traveled = 0.0
+                  lsm9ds1_stop_gyro_integration();
+                  break;
+                } else
+                    kobukiDriveDirect(40, -40);
+              } else {
+                if (angle >= fabs(bc_arr[bc_counter].angle)) {
+                  return_action_done = true;
+                  distance_traveled = 0.0
+                  lsm9ds1_stop_gyro_integration();
+                  break;
+                } else
+                  kobukiDriveDirect(-40, 40);
+              }
+            }
+          } else { //TODO Finish writing the linear driving and counting.
+            uint16_t curr_encoder = sensors.leftWheelEncoder;
+            float value = measure_distance(curr_encoder, last_encoder);
+            distance_traveled += value;
+            last_encoder = curr_encoder;
+
+            kobukiDriveDirect(-40, -40);
+            if (distance_traveled >= 0.5) {
+              reached_left = true;
+              reached_turning = true;
+              lsm9ds1_start_gyro_integration();
+            }
+          }
+        }
+        if (return_action_done) {
+          bc_counter--;
+          return_action_done = false;
+        }
+
         break;
       }
     }
