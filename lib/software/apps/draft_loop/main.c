@@ -37,10 +37,10 @@
 //State Encoding and Varaibles
 //==============================================================================
 typedef struct {
-  float distance = 0.0;
-  float angle = 0.0;
-  bool turn = false;
-  bool linear = false;
+  float distance;
+  float angle;
+  bool turn;
+  bool linear;
 }breadcrumb;
 static breadcrumb bc_arr[100]; //Be able to retrace 100 steps
 static uint32_t bc_counter = 0;
@@ -303,7 +303,7 @@ int main(void) {
         } else if (blocks <= 0 && angle > 360) {
           bc_arr[bc_counter].turn = true;
           bc_arr[bc_counter].angle = angle;
-          bc_counter++; 
+          bc_counter++;
           STATE = EXPLORE;
           lsm9ds1_stop_gyro_integration();
         } else if (blocks > 0) {
@@ -332,7 +332,7 @@ int main(void) {
         last_encoder = curr_encoder;
         kobukiDriveDirect(-40, -40);
         float dist;
-        get_distance(&dist);
+        getDistance(&dist);
         if (dist <= 10) {
           bc_arr[bc_counter].linear = true;
           bc_arr[bc_counter].distance = distance_traveled;
@@ -363,7 +363,7 @@ int main(void) {
         float dist;
         //Detect if there is an object in front that is not the tracked block.
         //Or detect if we are close to the target.
-        get_distance(&dist);
+        getDistance(&dist);
         if (dist <=10 && focusIndex == -1) {
           STATE = AVOID;
           avoid_move = true;
@@ -518,7 +518,7 @@ int main(void) {
            } else {
              kobukiDriveDirect(-40, -40);
              float dist;
-             get_distance(&dist);
+             getDistance(&dist);
              if (dist <= 10) {
                STATE = RETURN;
                break;
