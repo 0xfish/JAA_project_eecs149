@@ -37,12 +37,12 @@
 //State Encoding and Varaibles
 //==============================================================================
 typedef struct {
-  float distance,
-  float angle,
-  bool turn,
-  bool linear
-} breadcrumb;
-static breadcrumb[100] bc_arr; //Be able to retrace 100 steps
+  float distance;
+  float angle;
+  bool turn;
+  bool linear;
+}breadcrumb;
+static breadcrumb bc_arr[100]; //Be able to retrace 100 steps
 static uint32_t bc_counter = 0;
 /*Encoding for the BLE.*/
 typedef enum {
@@ -105,6 +105,8 @@ bool reached_approach = false;
 bool reached_center = false;
 bool return_turning = false;
 bool return_action_done = false;
+bool return_linear_turn = false;
+bool return_linear_turn_done = false;
 /*PID variables
 he process of tuning the PID parameters (Kp, Ki and Kd) is a continuous trial
 and error process. There is no exact way to calculate the value for the
@@ -279,6 +281,7 @@ int main(void) {
         display_write("AWAITING", DISPLAY_LINE_0);
         kobukiDriveDirect(0, 0);
         in_scan = false;
+        bc_counter = 0;
         break;
       }
       /*Rotates 360 looking for at least 1 block. If it finds at least blocks
@@ -322,6 +325,7 @@ int main(void) {
         distance_traveled += value;
         last_encoder = curr_encoder;
         kobukiDriveDirect(-40, -40);
+        float dist;
         get_distance(&dist);
         if (dist <= 10) {
           STATE = AVOID;
@@ -390,6 +394,7 @@ int main(void) {
       true then the next state will be move, otherwise it will be explore.
       */
       case AVOID: {
+        display_write("AVOID", DISPLAY_LINE_0);
         if (!avoid_backup) {
         uint16_t curr_encoder = sensors.leftWheelEncoder;
         float value = measure_distance(curr_encoder, last_encoder);
@@ -400,17 +405,17 @@ int main(void) {
           lsm9ds1_start_gyro_integration();
           distance_traveled = 0.0;
           kobukiDriveDirect(0,0);
-          avoid_back = true;
+          avoid_backup = true;
         }
       } else {
           float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
           if (angle >= 45) {
             lsm9ds1_stop_gyro_integration();
             kobukiDriveDirect(0, 0);
-            if (avoid_move)
+            if (avoid_move) {
               STATE = MOVE;
               avoid_move = false;
-            else
+            } else
               STATE = EXPLORE;
           } else
             kobukiDriveDirect(-40, 40);
@@ -425,6 +430,7 @@ int main(void) {
       with control signals.
       */
       case REACHED: {
+        display_write("REACHED", DISPLAY_LINE_0);
         if(reached_turning && !reached_left) {
           float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
           if (angle >= 45) {
@@ -432,7 +438,7 @@ int main(void) {
             distance_traveled = 0.0;
             kobukiDriveDirect(0,0);
             reached_left = true;
-            lsm9ds1_stop_gyro_integration()
+            lsm9ds1_stop_gyro_integration();
           } else {
             kobukiDriveDirect(-40, 40);
           }
@@ -499,6 +505,7 @@ int main(void) {
 
            } else {
              kobukiDriveDirect(-40, -40);
+             float dist;
              get_distance(&dist);
              if (dist <= 10) {
                STATE = RETURN;
@@ -512,11 +519,18 @@ int main(void) {
            }
           }
         break;
-      }
 
+      /*Assumes the Romi is directly behind the Target to push it to the
+      starting point.
+
+      LIFO Algorithm unpacks the breadcrumb array and inverts each move to
+      retrace its steps back to the original location.
+      */
       case RETURN: {
+        display_write("RETURN", DISPLAY_LINE_0);
         if (bc_counter == 0) {
           STATE = AWAITING;
+
         } else {
           if (bc_arr[bc_counter].turn) {
             if(!return_turning) {
@@ -527,7 +541,7 @@ int main(void) {
               if (bc_arr[bc_counter].angle < 0) {
                 if (angle >= fabs(bc_arr[bc_counter].angle)) {
                   return_action_done = true;
-                  distance_traveled = 0.0
+                  distance_traveled = 0.0;
                   lsm9ds1_stop_gyro_integration();
                   break;
                 } else
@@ -535,25 +549,40 @@ int main(void) {
               } else {
                 if (angle >= fabs(bc_arr[bc_counter].angle)) {
                   return_action_done = true;
-                  distance_traveled = 0.0
+                  distance_traveled = 0.0;
                   lsm9ds1_stop_gyro_integration();
                   break;
                 } else
                   kobukiDriveDirect(-40, 40);
               }
             }
-          } else { //TODO Finish writing the linear driving and counting.
+          } else {
+            if (!return_linear_turn_done) {
+              if (!return_linear_turn) {
+                lsm9ds1_start_gyro_integration();
+                return_linear_turn = true;
+              } else {
+                float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
+                if (angle >= 180) {
+                  return_linear_turn_done = true;
+                  lsm9ds1_stop_gyro_integration();
+                  distance_traveled = 0.0;
+                } else {
+                  kobukiDriveDirect(-40, 40);
+                }
+              }
+            } else {
             uint16_t curr_encoder = sensors.leftWheelEncoder;
             float value = measure_distance(curr_encoder, last_encoder);
             distance_traveled += value;
             last_encoder = curr_encoder;
-
             kobukiDriveDirect(-40, -40);
-            if (distance_traveled >= 0.5) {
-              reached_left = true;
-              reached_turning = true;
-              lsm9ds1_start_gyro_integration();
+            if (distance_traveled >= bc_arr[bc_counter].distance) {
+              return_action_done = true;
+              return_linear_turn_done = false;
+              return_linear_turn = false;
             }
+          }
           }
         }
         if (return_action_done) {
