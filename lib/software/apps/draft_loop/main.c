@@ -89,6 +89,10 @@ static float distance_traveled = 0.0;
 /*Control Signals.*/
 bool avoid_backup = false;
 bool avoid_move = false;
+bool reached_turning = false;
+bool reached_final = false;
+bool reached_left = false;
+bool reached_approach = false;
 //==============================================================================
 //Functions
 //==============================================================================
@@ -303,10 +307,7 @@ int main(void) {
           STATE = AVOID;
           avoid_move = false;
           break;
-        }
-
-        }
-        if (distance_traveled >= 0.5) {
+        } else if (distance_traveled >= 0.5) {
           STATE = SCAN;
           distance_traveled = 0.0;
           kobukiDriveDirect(0,0);
@@ -325,10 +326,16 @@ int main(void) {
            block = trackBlock(focusIndex);
         float dist;
         //Detect if there is an object in front that is not the tracked block.
+        //Or detect if we are close to the target.
         get_distance(&dist);
         if (dist <=10 && focusIndex == -1) {
           STATE = AVOID;
           avoid_move = true;
+          break;
+        } else if (dist <= 10 && focusIndex != -1) {
+          STATE = REACHED;
+          lsm9ds1_start_gyro_integration();
+          reached_turning = true;
           break;
         }
         // If we're able to track it, move motors
@@ -373,6 +380,7 @@ int main(void) {
           lsm9ds1_start_gyro_integration();
           distance_traveled = 0.0;
           kobukiDriveDirect(0,0);
+          avoid_back = true;
         }
       } else {
           float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
@@ -389,8 +397,68 @@ int main(void) {
         }
       break;
       }
+      /*Romi will encircle the target by making a diamond shape followed by
+      a 135 degree turn to be directly behind the target.
 
+      Code here is longer than usual because REACHED requires it's own FSM.
+      Instead of using a switch statement, here it's implemented
+      with control signals.
+      */
       case REACHED: {
+        if(reached_turning && !reached_left) {
+          float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
+          if (angle >= 45) {
+            reached_turning = false;
+            distance_traveled = 0.0;
+            kobukiDriveDirect(0,0);
+            reached_left = true;
+            lsm9ds1_stop_gyro_integration()
+          } else {
+            kobukiDriveDirect(-40, 40);
+          }
+        } else if (reached_turning && reached_left) {
+          float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
+          if (angle >= 45) {
+            reached_turning = false;
+            distance_traveled = 0.0;
+            kobukiDriveDirect(0,0);
+            reached_final = true;
+            lsm9ds1_stop_gyro_integration();
+            lsm9ds1_start_gyro_integration();
+          } else {
+            kobukiDriveDirect(40, -40);
+          }
+        }
+        else if (!reached_turning && !reached_final){
+          uint16_t curr_encoder = sensors.leftWheelEncoder;
+          float value = measure_distance(curr_encoder, last_encoder);
+          distance_traveled += value;
+          last_encoder = curr_encoder;
+          kobukiDriveDirect(-40, -40);
+          if (distance_traveled >= 0.5) {
+            reached_left = true;
+            reached_turning = true;
+            lsm9ds1_start_gyro_integration();
+          }
+        } else if (!reached_turning && reached_final)
+          if (!reached_approach) {
+            float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
+            if (angle >= 130) {
+              reached_approach = true;
+              lsm9ds1_stop_gyro_integration();
+              kobukiDriveDirect(0,0);
+            } else {
+              kobukiDriveDirect(40, -40);
+            }
+          } else {
+
+          }
+
+
+
+
+
+
         break;
       }
 
