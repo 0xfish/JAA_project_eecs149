@@ -93,6 +93,9 @@ bool reached_turning = false;
 bool reached_final = false;
 bool reached_left = false;
 bool reached_approach = false;
+bool reached_center = false;
+/*PID variables*/
+int32_t integral = 0;
 //==============================================================================
 //Functions
 //==============================================================================
@@ -301,7 +304,7 @@ int main(void) {
         float value = measure_distance(curr_encoder, last_encoder);
         distance_traveled += value;
         last_encoder = curr_encoder;
-        kobukiDriveDirect(40, 40);
+        kobukiDriveDirect(-40, -40);
         get_distance(&dist);
         if (dist <= 10) {
           STATE = AVOID;
@@ -451,14 +454,46 @@ int main(void) {
               kobukiDriveDirect(40, -40);
             }
           } else {
+            if (!reached_center) {
+            //This is an experimental PID loop to center to the target.
+            int8_t blocks = getBlocks(pixy, false, CCC_SIG_ALL, CCC_MAX_BLOCKS);
+            block_t *block;
+            focusIndex = acquireBlock(); // brought this over 2 to the left
+            if (focusIndex != -1) // If we've found a block, find it, track it
+               block = trackBlock(focusIndex);
+           if (block != NULL) {
+             // calculate pan and tilt "errors" with respect to first object (blocks[0]),
+             // which is the biggest object (they are sorted by size).
+             int32_t panOffset = (int32_t)pixy->frameWidth/2 - (int32_t)block->m_x;
 
+             int32_t target = 0;
+             int32_t error = target - panOffset;
+             integral += error;
+             //Play with integral and proportional gain, if needed.
+             //These are guessed values.
+             int32_t pwm = (5*error) + (integral*0.5);
+
+             kobukiDriveDirect(pwm, pwm);
+
+             if (error <= 10 && error >= -10) {
+               reached_center = true;
+               distance_traveled = 0.0;
+             }
+
+           } else {
+             kobukiDriveDirect(-40, -40);
+             get_distance(&dist);
+             if (dist <= 10) {
+               STATE = RETURN;
+               break;
+             }
+             }
+           }
+           // no object detected, go into reset state
+           } else {
+             focusIndex = -1;
+           }
           }
-
-
-
-
-
-
         break;
       }
 
