@@ -37,10 +37,10 @@
 //State Encoding and Varaibles
 //==============================================================================
 typedef struct {
-  float distance;
-  float angle;
-  bool turn;
-  bool linear;
+  float distance = 0.0;
+  float angle = 0.0;
+  bool turn = false;
+  bool linear = false;
 }breadcrumb;
 static breadcrumb bc_arr[100]; //Be able to retrace 100 steps
 static uint32_t bc_counter = 0;
@@ -301,9 +301,15 @@ int main(void) {
         if (blocks <= 0 && angle < 360) {
           kobukiDriveDirect(-40, 40);
         } else if (blocks <= 0 && angle > 360) {
+          bc_arr[bc_counter].turn = true;
+          bc_arr[bc_counter].angle = angle;
+          bc_counter++; 
           STATE = EXPLORE;
           lsm9ds1_stop_gyro_integration();
         } else if (blocks > 0) {
+          bc_arr[bc_counter].turn = true;
+          bc_arr[bc_counter].angle = angle;
+          bc_counter++;
           STATE = MOVE;
           lsm9ds1_stop_gyro_integration();
         } else {
@@ -328,10 +334,16 @@ int main(void) {
         float dist;
         get_distance(&dist);
         if (dist <= 10) {
+          bc_arr[bc_counter].linear = true;
+          bc_arr[bc_counter].distance = distance_traveled;
+          bc_counter++;
           STATE = AVOID;
           avoid_move = false;
           break;
         } else if (distance_traveled >= 0.5) {
+          bc_arr[bc_counter].linear = true;
+          bc_arr[bc_counter].distance = distance_traveled;
+          bc_counter++;
           STATE = SCAN;
           distance_traveled = 0.0;
           kobukiDriveDirect(0,0);
