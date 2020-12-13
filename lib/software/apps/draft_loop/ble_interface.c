@@ -1,8 +1,6 @@
 #include "ble_interface.h"
 
 
-
-
 /*Initializes the BLE for the ROMI.*/
 void setup_ble(enum STATES *st) {
   // Main application state

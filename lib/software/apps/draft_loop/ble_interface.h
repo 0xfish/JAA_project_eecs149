@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdint.h>
+
 #include "nrf.h"
 #include "app_util.h"
 #include "nrf_twi_mngr.h"
@@ -8,6 +9,7 @@
 
 #include "simple_ble.h"
 #include "buckler.h"
+
 //==============================================================================
 //State Encoding and Varaibles
 //==============================================================================

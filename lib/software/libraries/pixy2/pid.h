@@ -4,25 +4,25 @@
 typedef struct PIDLoop {
   int32_t m_command; 
 
-  int32_t m_pgain;
-  int32_t m_igain;
-  int32_t m_dgain;
+  float m_pgain;
+  float m_igain;
+  float m_dgain;
   int32_t m_min;
   int32_t m_max;
   int32_t m_deadband;
   bool    m_servo;
   
-  int32_t m_prevError;
-  int32_t m_integral;
+  float m_prevError;
+  float m_integral;
 } pid_loop_t;
 
 
-void pid_init(pid_loop_t *pid, int32_t p, int32_t i, int32_t d, bool servo);
+void pid_init(pid_loop_t *pid, float p, float i, float d, bool servo);
 void pid_reset(pid_loop_t *pid);
 void pid_update(pid_loop_t *pid, int32_t error);
 
 
-void pid_init(pid_loop_t *p, int32_t pgain, int32_t igain, int32_t dgain, bool servo) {
+void pid_init(pid_loop_t *p, float pgain, float igain, float dgain, bool servo) {
     p->m_pgain = pgain;
     p->m_igain = igain;
     p->m_dgain = dgain;
@@ -44,7 +44,7 @@ void pid_reset(pid_loop_t *p) {
 void pid_update(pid_loop_t *p, int32_t error) {
     int32_t pid;
 
-    if (p->m_prevError != 0x80000000L) { 
+    //if (p->m_prevError != 0x80000000L) { 
         // integrate integral
         p->m_integral += error;
         // clamp the integral
@@ -70,7 +70,7 @@ void pid_update(pid_loop_t *p, int32_t error) {
                 pid -= ZUMO_BASE_DEADBAND;
             p->m_command = pid; // Zumo base is velocity device, use the pid term directly  
         }
-    }
+    //}
 
     // retain the previous error val so we can calc the derivative
     p->m_prevError = error; 
