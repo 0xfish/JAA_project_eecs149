@@ -45,6 +45,14 @@ typedef enum {
   REACHED = 0xF,
   RETURN = 0x0
 } STATES ;
+typedef enum {
+  INITIAL,
+  STRAIGHT,
+  STRAIGHT_RO,
+  TURN,
+  DONE
+} RETURN_STATES;
+RETURN_STATES R_STATE = INITIAL;
 // set init state
 STATES STATE = AWAITING;
 // Queue-like structure where each turn marks the beginning
@@ -400,84 +408,54 @@ int main(void) {
 
       case RETURN: {
         display_write("RETURN", DISPLAY_LINE_0);
-        if (bc_counter < 0) {
-          STATE = AWAITING;
-
-        } else {
-          if (bc_arr[bc_counter].turn) {
-            if(!return_turning) {
-              lsm9ds1_start_gyro_integration();
-              return_turning = true;
-            } else {
-              char dist_trav_str_2[16];
-               snprintf(dist_trav_str_2, 16, "dist: %f", bc_arr[bc_counter].distance);
-                display_write(dist_trav_str_2, DISPLAY_LINE_1);
-              float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
-              if (bc_arr[bc_counter].angle < 0) {
-                if (angle >= fabs(bc_arr[bc_counter].angle)) {
-                  return_action_done = true;
-                  distance_traveled = 0.0;
-                  lsm9ds1_stop_gyro_integration();
-                  break;
-                } else
-                    kobukiDriveDirect(40, -40);
-              } else {
-                if (angle >= fabs(bc_arr[bc_counter].angle)) {
-                  return_action_done = true;
-                  distance_traveled = 0.0;
-                  lsm9ds1_stop_gyro_integration();
-                  break;
-                } else
-                  kobukiDriveDirect(-40, 40);
-              }
+        switch(R_STATE) {
+          case: INITIAL {
+            if (bc_counter < 0)
+              R_STATE = DONE;
+            else if (bc_arr[bc_counter].turn) {
+              R_STATE = TURN;
             }
-          } else if (bc_arr[bc_counter].linear) {
-            if (!return_linear_turn_done) {
-              if (!return_linear_turn) {
-                lsm9ds1_start_gyro_integration();
-                return_linear_turn = true;
-              } else {
-                  float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
-          	       snprintf(dist_trav_str, 16, "Counter: %d", bc_counter);
-          	        display_write(dist_trav_str, DISPLAY_LINE_0);
-  		                char dist_trav_str_2[16];
-          	           snprintf(dist_trav_str_2, 16, "dist: %f", bc_arr[bc_counter].distance);
-          	            display_write(dist_trav_str_2, DISPLAY_LINE_1);
-                if (angle >= 180) {
-                  return_linear_turn_done = true;
-                  lsm9ds1_stop_gyro_integration();
-                  distance_traveled = 0.0;
-                  snprintf(dist_trav_str_2, 16, "done turn: %d", return_linear_turn_done);
-                   display_write(dist_trav_str_2, DISPLAY_LINE_1);
-                  kobukiDriveDirect(0,0);
-                } else {
-                  snprintf(dist_trav_str_2, 16, "Turning: %f", angle);
-                   display_write(dist_trav_str_2, DISPLAY_LINE_1);
-                  kobukiDriveDirect(-40, 40);
-                }
-              }
-            } else {
+
+            else if (bc_arr[bc_counter].linear) {
+              R_STATE = STRAIGHT;
+              lsm9ds1_start_gyro_integration();
+              kobukiDriveDirect(-40, 40);
+            }
+
+            break;
+          }
+          case: STRAIGHT_RO {
+            float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
+            if (angle >= 180) {
+              R_STATE = STRAIGHT;
+              lsm9ds1_stop_gyro_integration();
+              distance_traveled = 0.0;
+            }
+            break;
+          }
+          case: STRAIGHT {
             uint16_t curr_encoder = sensors.leftWheelEncoder;
             float value = measure_distance(curr_encoder, last_encoder);
             distance_traveled += value;
             last_encoder = curr_encoder;
-            char dist_trav_str_2[16];
-            snprintf(dist_trav_str_2, 16, "in straight: %f", distance_traveled);
-             display_write(dist_trav_str_2, DISPLAY_LINE_1);
-            kobukiDriveDirect(-40, -40);
             if (distance_traveled >= bc_arr[bc_counter].distance) {
-              snprintf(dist_trav_str_2, 16, "Ended Straight: %f", distance_traveled);
-               display_write(dist_trav_str_2, DISPLAY_LINE_1);
-              return_action_done = true;
-              return_linear_turn_done = false;
-              return_linear_turn = false;
-            }
+              kobukiDriveDirect(0,0);
+              distance_traveled = 0.0;
+              R_STATE = INITIAL;
+              bc_counter--;
+            } else
+            kobukiDriveDirect(-40, -40);
+            break;
           }
+          case: TURN {
+            break;
           }
-        }
-        if (return_action_done) {
-          bc_counter--;
-          return_action_done = false;
+          case: DONE {
+            break;
+          }
+
+
+
         }
         break;
       }
