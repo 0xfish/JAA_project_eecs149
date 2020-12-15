@@ -428,7 +428,7 @@ int main(void) {
           case STRAIGHT_RO: {
             display_write("In RO", DISPLAY_LINE_0);
             float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
-            if (angle >= 180) {
+            if (angle > 180) {
               display_write("Finished RO", DISPLAY_LINE_0);
               R_STATE = STRAIGHT;
               lsm9ds1_stop_gyro_integration();
@@ -442,7 +442,7 @@ int main(void) {
             float value = measure_distance(curr_encoder, last_encoder);
             distance_traveled += value;
             last_encoder = curr_encoder;
-            if (distance_traveled >= bc_arr[bc_counter].distance) {
+            if (distance_traveled > bc_arr[bc_counter].distance) {
               kobukiDriveDirect(0,0);
               display_write("Finished STR", DISPLAY_LINE_0);
               distance_traveled = 0.0;
