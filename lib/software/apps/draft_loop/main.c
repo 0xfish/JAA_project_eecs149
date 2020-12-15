@@ -456,6 +456,7 @@ int main(void) {
             float value = measure_distance(curr_encoder, last_encoder);
             distance_traveled += value;
             last_encoder = curr_encoder;
+            char dist_trav_str_2[16];
             snprintf(dist_trav_str_2, 16, "in straight: %f", distance_traveled);
              display_write(dist_trav_str_2, DISPLAY_LINE_1);
             kobukiDriveDirect(-40, -40);
