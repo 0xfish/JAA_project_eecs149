@@ -448,6 +448,8 @@ int main(void) {
                    display_write(dist_trav_str_2, DISPLAY_LINE_1);
                   kobukiDriveDirect(0,0);
                 } else {
+                  snprintf(dist_trav_str_2, 16, "Turning: %f", angle);
+                   display_write(dist_trav_str_2, DISPLAY_LINE_1);
                   kobukiDriveDirect(-40, 40);
                 }
               }
@@ -461,6 +463,8 @@ int main(void) {
              display_write(dist_trav_str_2, DISPLAY_LINE_1);
             kobukiDriveDirect(-40, -40);
             if (distance_traveled >= bc_arr[bc_counter].distance) {
+              snprintf(dist_trav_str_2, 16, "Ended Straight: %f", distance_traveled);
+               display_write(dist_trav_str_2, DISPLAY_LINE_1);
               return_action_done = true;
               return_linear_turn_done = false;
               return_linear_turn = false;
