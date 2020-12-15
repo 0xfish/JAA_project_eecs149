@@ -393,7 +393,7 @@ int main(void) {
 
       case RETURN: {
         display_write("RETURN", DISPLAY_LINE_0);
-        if (bc_counter == 0) {
+        if (bc_counter < 0) {
           STATE = AWAITING;
 
         } else {
