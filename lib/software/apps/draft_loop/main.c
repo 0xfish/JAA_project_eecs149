@@ -55,7 +55,21 @@ typedef struct {
 }breadcrumb;
 static breadcrumb bc_arr[100]; //Be able to retrace 100 steps
 static uint32_t bc_counter = 0;
-
+/*Encoders and distance variables.*/
+static uint16_t last_encoder = 0;
+static float distance_traveled = 0.0;
+/*Control Signals.*/
+bool avoid_backup = false;
+bool avoid_move = false;
+bool reached_turning = false;
+bool reached_final = false;
+bool reached_left = false;
+bool reached_approach = false;
+bool reached_center = false;
+bool return_turning = false;
+bool return_action_done = false;
+bool return_linear_turn = false;
+bool return_linear_turn_done = false;
 nrf_drv_spi_t pixy_spi_instance = NRF_DRV_SPI_INSTANCE(1);
 nrf_drv_spi_config_t pixy_spi_config = {
   .sck_pin = BUCKLER_SD_SCLK,
