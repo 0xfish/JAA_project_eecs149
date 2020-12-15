@@ -350,6 +350,7 @@ int main(void) {
         if (dist >= 0.5) {
           //STATE = SCAN;
           STATE = RETURN;
+          R_STATE = INITIAL;
           bc_arr[bc_counter].distance = dist;
           bc_arr[bc_counter].turn = false;
           bc_arr[bc_counter].linear = true;
@@ -415,9 +416,9 @@ int main(void) {
             else if (bc_arr[bc_counter].turn) {
               R_STATE = TURN;
             }
-
             else if (bc_arr[bc_counter].linear) {
-              R_STATE = STRAIGHT;
+              R_STATE = STRAIGHT_RO;
+              display_write("In linear", DISPLAY_LINE_0);
               lsm9ds1_start_gyro_integration();
               kobukiDriveDirect(-40, 40);
             }
@@ -425,8 +426,10 @@ int main(void) {
             break;
           }
           case STRAIGHT_RO: {
+            display_write("In RO", DISPLAY_LINE_0);
             float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
             if (angle >= 180) {
+              display_write("Finished RO", DISPLAY_LINE_0);
               R_STATE = STRAIGHT;
               lsm9ds1_stop_gyro_integration();
               distance_traveled = 0.0;
@@ -434,12 +437,14 @@ int main(void) {
             break;
           }
           case STRAIGHT: {
+            display_write("In STRA", DISPLAY_LINE_0);
             uint16_t curr_encoder = sensors.leftWheelEncoder;
             float value = measure_distance(curr_encoder, last_encoder);
             distance_traveled += value;
             last_encoder = curr_encoder;
             if (distance_traveled >= bc_arr[bc_counter].distance) {
               kobukiDriveDirect(0,0);
+              display_write("Finished STR", DISPLAY_LINE_0);
               distance_traveled = 0.0;
               R_STATE = INITIAL;
               bc_counter--;
