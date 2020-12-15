@@ -444,6 +444,9 @@ int main(void) {
                   return_linear_turn_done = true;
                   lsm9ds1_stop_gyro_integration();
                   distance_traveled = 0.0;
+                  snprintf(dist_trav_str_2, 16, "done turn: %d", return_linear_turn_done);
+                   display_write(dist_trav_str_2, DISPLAY_LINE_1);
+                  kobukiDriveDirect(0,0);
                 } else {
                   kobukiDriveDirect(-40, 40);
                 }
@@ -453,6 +456,8 @@ int main(void) {
             float value = measure_distance(curr_encoder, last_encoder);
             distance_traveled += value;
             last_encoder = curr_encoder;
+            snprintf(dist_trav_str_2, 16, "in straight: %f", distance_traveled);
+             display_write(dist_trav_str_2, DISPLAY_LINE_1);
             kobukiDriveDirect(-40, -40);
             if (distance_traveled >= bc_arr[bc_counter].distance) {
               return_action_done = true;
