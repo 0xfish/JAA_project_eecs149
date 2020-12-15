@@ -50,7 +50,7 @@ STATES STATE = AWAITING;
 // Queue-like structure where each turn marks the beginning
 // of a new element in the queue with its own distance, angle, etc.
 typedef struct {
-  float distance; 
+  float distance;
   float angle;
   bool turn;
   bool linear;
@@ -349,7 +349,7 @@ int main(void) {
           dist = 0.0;
           kobukiDriveDirect(0,0);
         }
-        
+
 // state = returning;
 // bc_arrblahblkflafkglak
         break;
@@ -434,12 +434,12 @@ int main(void) {
                 lsm9ds1_start_gyro_integration();
                 return_linear_turn = true;
               } else {
-                float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
-        	snprintf(dist_trav_str, 16, "angle: %f", angle);
-        	display_write(dist_trav_str, DISPLAY_LINE_0);
-		char dist_trav_str_2[16];
-        	snprintf(dist_trav_str_2, 16, "dist: %f", bc_arr[bc_counter].distance);
-        	display_write(dist_trav_str_2, DISPLAY_LINE_1);
+                  float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
+          	       snprintf(dist_trav_str, 16, "Counter: %d", bc_counter);
+          	        display_write(dist_trav_str, DISPLAY_LINE_0);
+  		                char dist_trav_str_2[16];
+          	           snprintf(dist_trav_str_2, 16, "dist: %f", bc_arr[bc_counter].distance);
+          	            display_write(dist_trav_str_2, DISPLAY_LINE_1);
                 if (angle >= 180) {
                   return_linear_turn_done = true;
                   lsm9ds1_stop_gyro_integration();
