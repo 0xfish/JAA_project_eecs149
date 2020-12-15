@@ -409,6 +409,7 @@ int main(void) {
               lsm9ds1_start_gyro_integration();
               return_turning = true;
             } else {
+              display_write("In turning TURN", DISPLAY_LINE_0);
               float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
               if (bc_arr[bc_counter].angle < 0) {
                 if (angle >= fabs(bc_arr[bc_counter].angle)) {
