@@ -435,6 +435,8 @@ int main(void) {
                 return_linear_turn = true;
               } else {
                 float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
+        	snprintf(dist_trav_str, 16, "angle: %f", angle);
+        	display_write(dist_trav_str, DISPLAY_LINE_0);
                 if (angle >= 180) {
                   return_linear_turn_done = true;
                   lsm9ds1_stop_gyro_integration();
