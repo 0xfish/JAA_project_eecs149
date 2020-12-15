@@ -56,8 +56,6 @@ typedef struct {
 static breadcrumb bc_arr[100]; //Be able to retrace 100 steps
 static uint32_t bc_counter = 0;
 /*Encoders and distance variables.*/
-static uint16_t last_encoder = 0;
-static float distance_traveled = 0.0;
 /*Control Signals.*/
 bool avoid_backup = false;
 bool avoid_move = false;
