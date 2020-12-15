@@ -355,7 +355,7 @@ int main(void) {
         int8_t blocks = getBlocks(pixy, false, CCC_SIG_ALL, CCC_MAX_BLOCKS);
         block_t *block;
         focusIndex = acquireBlock(); // brought this over 2 to the left
-        if (focusIndex != -1) // If we've found a block, find it, track it
+        if (focusIndex != -1) { // If we've found a block, find it, track it
            block = trackBlock(focusIndex);
 
         // If we're able to track it, move motors
@@ -376,6 +376,10 @@ int main(void) {
         } else {
           focusIndex = -1;
         }
+    } else {
+        STATE = SCAN;
+    }
+
         break;
       }
 
