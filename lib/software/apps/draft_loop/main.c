@@ -47,14 +47,16 @@ typedef enum {
 } STATES ;
 // set init state
 STATES STATE = AWAITING;
+// Queue-like structure where each turn marks the beginning
+// of a new element in the queue with its own distance, angle, etc.
 typedef struct {
-  float distance;
+  float distance; 
   float angle;
   bool turn;
   bool linear;
-}breadcrumb;
+} breadcrumb;
 static breadcrumb bc_arr[100]; //Be able to retrace 100 steps
-static uint32_t bc_counter = 0;
+static uint32_t bc_counter = 0; // index in the queue
 /*Encoders and distance variables.*/
 /*Control Signals.*/
 bool avoid_backup = false;
@@ -336,15 +338,20 @@ int main(void) {
         display_write(dist_trav_str, DISPLAY_LINE_0);
         //last_encoder = curr_encoder;
         kobukiDriveDirect(40, 40);
+// interrupt with ble
         if (dist >= 0.5) {
-          STATE = SCAN;
-          dist = 0.0;
+          //STATE = SCAN;
+          STATE = RETURN;
           bc_arr[bc_counter].distance = dist;
           bc_arr[bc_counter].turn = false;
           bc_arr[bc_counter].linear = true;
           bc_counter++;
+          dist = 0.0;
           kobukiDriveDirect(0,0);
         }
+        
+// state = returning;
+// bc_arrblahblkflafkglak
         break;
       }
 
