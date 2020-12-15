@@ -35,6 +35,7 @@ int main(void) {
   while(1) {
     // get HC-SR04 distance
     float dist;
+    char dist_print[16];
 
     if(getDistance(&dist)) {
 
@@ -42,7 +43,9 @@ int main(void) {
       //printf("dist = %f cm\n", dist);
 
       // send distance via NUS
-      printf("Distance is :%f\n", dist);
+      snprintf(dist_print, 16, "cm away: %f", dist);
+      display_write(dist_print, DISPLAY_LINE_0);
+      //printf("Distance is :%f\n", dist);
     }
 
     // delay
