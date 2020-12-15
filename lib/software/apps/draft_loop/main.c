@@ -409,7 +409,7 @@ int main(void) {
       case RETURN: {
         display_write("RETURN", DISPLAY_LINE_0);
         switch(R_STATE) {
-          case: INITIAL {
+          case INITIAL: {
             if (bc_counter < 0)
               R_STATE = DONE;
             else if (bc_arr[bc_counter].turn) {
@@ -424,7 +424,7 @@ int main(void) {
 
             break;
           }
-          case: STRAIGHT_RO {
+          case STRAIGHT_RO: {
             float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
             if (angle >= 180) {
               R_STATE = STRAIGHT;
@@ -433,7 +433,7 @@ int main(void) {
             }
             break;
           }
-          case: STRAIGHT {
+          case STRAIGHT: {
             uint16_t curr_encoder = sensors.leftWheelEncoder;
             float value = measure_distance(curr_encoder, last_encoder);
             distance_traveled += value;
@@ -447,10 +447,10 @@ int main(void) {
             kobukiDriveDirect(-40, -40);
             break;
           }
-          case: TURN {
+          case TURN: {
             break;
           }
-          case: DONE {
+          case DONE: {
             break;
           }
 
