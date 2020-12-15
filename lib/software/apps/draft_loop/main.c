@@ -428,7 +428,7 @@ int main(void) {
                   kobukiDriveDirect(-40, 40);
               }
             }
-          } else {
+          } else if (bc_arr[bc_counter].linear) {
             if (!return_linear_turn_done) {
               if (!return_linear_turn) {
                 lsm9ds1_start_gyro_integration();
