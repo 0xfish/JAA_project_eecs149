@@ -345,7 +345,7 @@ int main(void) {
           bc_arr[bc_counter].distance = dist;
           bc_arr[bc_counter].turn = false;
           bc_arr[bc_counter].linear = true;
-          bc_counter++;
+          //bc_counter++;
           dist = 0.0;
           kobukiDriveDirect(0,0);
         }
