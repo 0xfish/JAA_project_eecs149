@@ -47,7 +47,14 @@ typedef enum {
 } STATES ;
 // set init state
 STATES STATE = AWAITING;
-
+typedef struct {
+  float distance;
+  float angle;
+  bool turn;
+  bool linear;
+}breadcrumb;
+static breadcrumb bc_arr[100]; //Be able to retrace 100 steps
+static uint32_t bc_counter = 0;
 
 nrf_drv_spi_t pixy_spi_instance = NRF_DRV_SPI_INSTANCE(1);
 nrf_drv_spi_config_t pixy_spi_config = {
@@ -225,7 +232,7 @@ void loop() {
 }
 
 /* Measures distance from the encoder. */
-static float measure_distance(uint16_t current_encoder, 
+static float measure_distance(uint16_t current_encoder,
                               uint16_t previous_encoder) {
 
   // conversion from encoder ticks to meters
@@ -284,10 +291,19 @@ int main(void) {
         } else if (blocks <= 0 && angle > 360) {
           STATE = EXPLORE;
           in_scan = false;
+          //backtracking
+          bc_arr[bc_counter].angle = angle;
+          bc_arr[bc_counter].turn = true;
+          bc_arr[bc_counter].linear = false;
+          bc_counter++;
           drive_start_enc_right = sensors.rightWheelEncoder;
           lsm9ds1_stop_gyro_integration();
         } else if (blocks > 0) {
           STATE = MOVE;
+          bc_arr[bc_counter].angle = angle;
+          bc_arr[bc_counter].turn = true;
+          bc_arr[bc_counter].linear = false;
+          bc_counter++;
           lsm9ds1_stop_gyro_integration();
         } else {
           STATE = AWAITING;
@@ -311,6 +327,10 @@ int main(void) {
         if (dist >= 0.5) {
           STATE = SCAN;
           dist = 0.0;
+          bc_arr[bc_counter].distance = dist;
+          bc_arr[bc_counter].turn = false;
+          bc_arr[bc_counter].linear = true;
+          bc_counter++;
           kobukiDriveDirect(0,0);
         }
         break;
@@ -360,6 +380,68 @@ int main(void) {
       }
 
       case RETURN: {
+        display_write("RETURN", DISPLAY_LINE_0);
+        if (bc_counter == 0) {
+          STATE = AWAITING;
+
+        } else {
+          if (bc_arr[bc_counter].turn) {
+            if(!return_turning) {
+              lsm9ds1_start_gyro_integration();
+              return_turning = true;
+            } else {
+              float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
+              if (bc_arr[bc_counter].angle < 0) {
+                if (angle >= fabs(bc_arr[bc_counter].angle)) {
+                  return_action_done = true;
+                  distance_traveled = 0.0;
+                  lsm9ds1_stop_gyro_integration();
+                  break;
+                } else
+                    kobukiDriveDirect(40, -40);
+              } else {
+                if (angle >= fabs(bc_arr[bc_counter].angle)) {
+                  return_action_done = true;
+                  distance_traveled = 0.0;
+                  lsm9ds1_stop_gyro_integration();
+                  break;
+                } else
+                  kobukiDriveDirect(-40, 40);
+              }
+            }
+          } else {
+            if (!return_linear_turn_done) {
+              if (!return_linear_turn) {
+                lsm9ds1_start_gyro_integration();
+                return_linear_turn = true;
+              } else {
+                float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
+                if (angle >= 180) {
+                  return_linear_turn_done = true;
+                  lsm9ds1_stop_gyro_integration();
+                  distance_traveled = 0.0;
+                } else {
+                  kobukiDriveDirect(-40, 40);
+                }
+              }
+            } else {
+            uint16_t curr_encoder = sensors.leftWheelEncoder;
+            float value = measure_distance(curr_encoder, last_encoder);
+            distance_traveled += value;
+            last_encoder = curr_encoder;
+            kobukiDriveDirect(-40, -40);
+            if (distance_traveled >= bc_arr[bc_counter].distance) {
+              return_action_done = true;
+              return_linear_turn_done = false;
+              return_linear_turn = false;
+            }
+          }
+          }
+        }
+        if (return_action_done) {
+          bc_counter--;
+          return_action_done = false;
+        }
         break;
       }
     }
