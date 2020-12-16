@@ -276,6 +276,7 @@ static float measure_distance(uint16_t current_encoder,
 
 char dist_trav_str[16];
 float dist;
+bool rstate;
 uint16_t drive_start_enc_right;
 int main(void) {
   //printf("here\n");
@@ -409,6 +410,7 @@ int main(void) {
 
       case RETURN: {
         display_write("RETURN", DISPLAY_LINE_0);
+	if (rstate) R_STATE = STRAIGHT;
         switch(R_STATE) {
           case INITIAL: {
             if (bc_counter < 0)
@@ -431,6 +433,7 @@ int main(void) {
             if (angle > 180) {
               display_write("Finished RO", DISPLAY_LINE_0);
               R_STATE = STRAIGHT;
+	      rstate = true;
 	      dist = 0.0;
 	      drive_start_enc_right = sensors.rightWheelEncoder;
               lsm9ds1_stop_gyro_integration();
@@ -451,6 +454,7 @@ int main(void) {
               display_write("Finished STR", DISPLAY_LINE_0);
               dist = 0.0;
               R_STATE = INITIAL;
+	      rstate = false;
               bc_counter--;
             } else
             kobukiDriveDirect(-40, -40);
