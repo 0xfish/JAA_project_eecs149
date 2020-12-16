@@ -432,6 +432,7 @@ int main(void) {
               display_write("Finished RO", DISPLAY_LINE_0);
               R_STATE = STRAIGHT;
 	      dist = 0.0;
+	      drive_start_enc_right = sensors.rightWheelEncoder;
               lsm9ds1_stop_gyro_integration();
               //distance_traveled = 0.0;
             }
