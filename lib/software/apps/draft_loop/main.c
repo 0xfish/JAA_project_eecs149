@@ -431,21 +431,24 @@ int main(void) {
             if (angle > 180) {
               display_write("Finished RO", DISPLAY_LINE_0);
               R_STATE = STRAIGHT;
+	      dist = 0.0;
               lsm9ds1_stop_gyro_integration();
-              distance_traveled = 0.0;
+              //distance_traveled = 0.0;
             }
             break;
           }
           case STRAIGHT: {
             display_write("In STRA", DISPLAY_LINE_0);
-            uint16_t curr_encoder = sensors.leftWheelEncoder;
-            float value = measure_distance(curr_encoder, last_encoder);
-            distance_traveled += value;
-            last_encoder = curr_encoder;
-            if (distance_traveled > bc_arr[bc_counter].distance) {
+            dist += measure_distance(sensors.rightWheelEncoder, drive_start_enc_right);
+            drive_start_enc_right = sensors.rightWheelEncoder;
+            //uint16_t curr_encoder = sensors.leftWheelEncoder;
+            //float value = measure_distance(curr_encoder, last_encoder);
+            //distance_traveled += value;
+            //last_encoder = curr_encoder;
+            if (dist > bc_arr[bc_counter].distance) {
               kobukiDriveDirect(0,0);
               display_write("Finished STR", DISPLAY_LINE_0);
-              distance_traveled = 0.0;
+              dist = 0.0;
               R_STATE = INITIAL;
               bc_counter--;
             } else
