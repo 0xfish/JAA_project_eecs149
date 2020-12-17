@@ -246,7 +246,8 @@ static float measure_distance(uint16_t current_encoder,
 //==============================================================================
 
 char dist_trav_str[16];
-float dist;
+float ldist;
+float rdist;
 uint16_t drive_start_enc_right;
 int main(void) {
   //printf("here\n");
@@ -301,16 +302,16 @@ int main(void) {
       case EXPLORE: {
         // getting rid of display_write of "explore" for debug below
         //display_write("EXPLORE", DISPLAY_LINE_0);
-        dist += measure_distance(sensors.rightWheelEncoder, drive_start_enc_right);
+        rdist += measure_distance(sensors.rightWheelEncoder, drive_start_enc_right);
         drive_start_enc_right = sensors.rightWheelEncoder;
         // distance traveled to display for explore debug
-        snprintf(dist_trav_str, 16, "dist: %f", dist);
+        snprintf(dist_trav_str, 16, "rdist: %f", rdist);
         display_write(dist_trav_str, DISPLAY_LINE_0);
         //last_encoder = curr_encoder;
         kobukiDriveDirect(40, 40);
-        if (dist >= 0.5) {
+        if (rdist >= 0.5) {
           STATE = SCAN;
-          dist = 0.0;
+          rdist = 0.0;
           kobukiDriveDirect(0,0);
         }
         break;
