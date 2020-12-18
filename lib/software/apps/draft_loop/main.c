@@ -365,6 +365,12 @@ int main(void) {
         int8_t blocks = getBlocks(pixy, false, CCC_SIG_ALL, CCC_MAX_BLOCKS);
         block_t *block;
         focusIndex = acquireBlock(); // brought this over 2 to the left
+        rdist += measure_rev_distance(sensors.rightWheelEncoder, drive_start_enc_right);
+        ldist += measure_rev_distance(sensors.leftWheelEncoder, drive_start_enc_left);
+        drive_start_enc_right = sensors.rightWheelEncoder;
+        drive_start_enc_left= sensors.leftWheelEncoder;
+        snprintf(dist_trav_str, 16, "rdist: %f", rdist);
+        display_write(dist_trav_str, DISPLAY_LINE_0);
         if (focusIndex != -1) { // If we've found a block, find it, track it
            block = trackBlock(focusIndex);
 
@@ -374,17 +380,9 @@ int main(void) {
           // which is the biggest object (they are sorted by size).
           int32_t panOffset = (int32_t)pixy->frameWidth/2 - (int32_t)block->m_x;
 	  // measure changes in distance
-          rdist += measure_rev_distance(sensors.rightWheelEncoder, drive_start_enc_right);
-          ldist += measure_rev_distance(sensors.leftWheelEncoder, drive_start_enc_left);
-          drive_start_enc_right = sensors.rightWheelEncoder;
-          drive_start_enc_left= sensors.leftWheelEncoder;
-          snprintf(dist_trav_str, 16, "rdist: %f", rdist);
-          display_write(dist_trav_str, DISPLAY_LINE_0);
-	  
-
-	  
 	  if (rdist > 0.5) {
 	    STATE = REACHED;
+            lsm9ds1_start_gyro_integration();
 	    rdist = 0.0;
 	  } else if (panOffset < -20) {
             kobukiDriveDirect(-40, -50); //right turn (1)
