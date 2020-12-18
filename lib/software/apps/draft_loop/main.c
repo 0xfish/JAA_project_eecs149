@@ -264,6 +264,7 @@ static float measure_rev_distance(uint16_t current_encoder,
 
 //==============================================================================
 
+int nextCrumbInd = 0;
 bool wasRight;
 bool wasLeft;
 bool wasStraight;
@@ -379,18 +380,40 @@ int main(void) {
 	  
 
           // adjust accordingly
-          if (panOffset < -20)
+          if (panOffset < -20) {
             kobukiDriveDirect(-40, -50); //right turn (1)
-	    //if (!wasRight) {
-              //bc[nextCrumbInd] = 1;
-	    //}
+	    if (!wasRight) {
+              bc[nextCrumbInd] = 1;
+	      bc[nextCrumbId + 1] = ldist;
+	      bc[nextCrumbId + 2] = rdist;
+	      nextCrumbId += 3;
+	    }
 	    wasRight = true;
-          else if (panOffset > 20)
+	    wasLeft = false;
+	    wasStraight = false;
+	  } else if (panOffset > 20) {
             kobukiDriveDirect(-50, -40); //left turn (-1)
-	    wasLeft = true;
-          else
+	    if (!wasLeft) {
+              bc[nextCrumbInd] = -1;
+	      bc[nextCrumbId + 1] = ldist;
+	      bc[nextCrumbId + 2] = rdist;
+	      nextCrumbId += 3;
+	    }
+ 	    wasLeft = true;
+	    wasRight = false;
+	    wasStraight = false;
+	  } else {
             kobukiDriveDirect(-40, -40); // straight (0)
+	    if (!wasStraight) {
+              bc[nextCrumbInd] = 0;
+	      bc[nextCrumbId + 1] = ldist;
+	      bc[nextCrumbId + 2] = rdist;
+	      nextCrumbId += 3;
+	    }
 	    wasStraight = true;
+	    wasRight = false;
+	    wasLeft = false;
+	  }
 
         // no object detected, go into reset state
         } else {
