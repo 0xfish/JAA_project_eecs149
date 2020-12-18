@@ -324,8 +324,6 @@ int main(void) {
 	  ldist = 0.0;
           kobukiDriveDirect(0,0);
           lsm9ds1_start_gyro_integration();
-          drive_start_enc_right = sensors.rightWheelEncoder;
-          drive_start_enc_left= sensors.leftWheelEncoder;
         }
         break;
       }
@@ -379,8 +377,10 @@ int main(void) {
         display_write(dist_trav_str, DISPLAY_LINE_0);
 	kobukiDriveDirect(-40, 40);
 	// done turning around
-	if (angle > 360) {
+	if (angle > 180) {
 	  // retrace steps while return distance not achieved
+          drive_start_enc_right = sensors.rightWheelEncoder;
+          drive_start_enc_left= sensors.leftWheelEncoder;
 	  while (rdist < bc[1]) {
             rdist += measure_distance(sensors.rightWheelEncoder, drive_start_enc_right);
             ldist += measure_distance(sensors.rightWheelEncoder, drive_start_enc_right);
