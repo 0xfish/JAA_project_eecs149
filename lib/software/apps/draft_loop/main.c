@@ -358,7 +358,7 @@ int main(void) {
 
       /*Drives towards object. Assumes no distance sensor for now.*/
       case MOVE: {
-        display_write("MOVE", DISPLAY_LINE_0);
+        //display_write("MOVE", DISPLAY_LINE_0);
         // get active blocks from Pixy
         int8_t blocks = getBlocks(pixy, false, CCC_SIG_ALL, CCC_MAX_BLOCKS);
         block_t *block;
@@ -380,8 +380,11 @@ int main(void) {
           display_write(dist_trav_str, DISPLAY_LINE_0);
 	  
 
-          // adjust accordingly
-          if (panOffset < -20) {
+	  
+	  if (rdist > 0.5) {
+	    STATE = REACHED;
+	    rdist = 0.0;
+	  } else if (panOffset < -20) {
             kobukiDriveDirect(-40, -50); //right turn (1)
 	    if (!wasRight) {
               bc[nextCrumbId] = 1;
