@@ -264,7 +264,8 @@ static float measure_rev_distance(uint16_t current_encoder,
 
 //==============================================================================
 
-int nextCrumbInd = 0;
+int nextCrumbId = 0;
+int lastCrumbId = 0;
 bool wasRight;
 bool wasLeft;
 bool wasStraight;
@@ -383,9 +384,10 @@ int main(void) {
           if (panOffset < -20) {
             kobukiDriveDirect(-40, -50); //right turn (1)
 	    if (!wasRight) {
-              bc[nextCrumbInd] = 1;
+              bc[nextCrumbId] = 1;
 	      bc[nextCrumbId + 1] = ldist;
 	      bc[nextCrumbId + 2] = rdist;
+	      lastCrumbId = nextCrumbId;
 	      nextCrumbId += 3;
 	    }
 	    wasRight = true;
@@ -394,9 +396,10 @@ int main(void) {
 	  } else if (panOffset > 20) {
             kobukiDriveDirect(-50, -40); //left turn (-1)
 	    if (!wasLeft) {
-              bc[nextCrumbInd] = -1;
+              bc[nextCrumbId] = -1;
 	      bc[nextCrumbId + 1] = ldist;
 	      bc[nextCrumbId + 2] = rdist;
+	      lastCrumbId = nextCrumbId;
 	      nextCrumbId += 3;
 	    }
  	    wasLeft = true;
@@ -405,9 +408,10 @@ int main(void) {
 	  } else {
             kobukiDriveDirect(-40, -40); // straight (0)
 	    if (!wasStraight) {
-              bc[nextCrumbInd] = 0;
+              bc[nextCrumbId] = 0;
 	      bc[nextCrumbId + 1] = ldist;
 	      bc[nextCrumbId + 2] = rdist;
+	      lastCrumbId = nextCrumbId;
 	      nextCrumbId += 3;
 	    }
 	    wasStraight = true;
