@@ -320,7 +320,7 @@ int main(void) {
 	  bc[0] = 0; // dir = straight
 	  //bc[1] = rdist; // straight for 'this' distance
 	  bc[1] = rdist; // straight for 'this' distance
-	  STATE = RETURN;
+	  STATE = REACHED;
           rdist = 0.0;
 	  ldist = 0.0;
           kobukiDriveDirect(0,0);
@@ -369,21 +369,21 @@ int main(void) {
       }
 
       case REACHED: {
-        break;
-      }
-
-      case RETURN: {
         float angle = fabs(lsm9ds1_read_gyro_integration().z_axis);
         snprintf(dist_trav_str, 16, "angle: %f", angle);
         display_write(dist_trav_str, DISPLAY_LINE_0);
 	kobukiDriveDirect(-40, 40);
 	// done turning around
 	if (angle > 180) {
-	  // retrace steps while return distance not achieved
+	  STATE = RETURN;
           drive_start_enc_right = sensors.rightWheelEncoder;
           drive_start_enc_left= sensors.leftWheelEncoder;
-	  printf("rdist: %f\n", rdist);
-	  while (rdist < bc[1]) {
+	}
+        break;
+      }
+
+      case RETURN: {
+	  if (rdist < bc[1]) {
             rdist += measure_distance(sensors.rightWheelEncoder, drive_start_enc_right);
             ldist += measure_distance(sensors.leftWheelEncoder, drive_start_enc_left);
             drive_start_enc_right = sensors.rightWheelEncoder;
@@ -391,12 +391,11 @@ int main(void) {
             snprintf(dist_trav_str, 16, "rdist: %f", rdist);
             display_write(dist_trav_str, DISPLAY_LINE_0);
             kobukiDriveDirect(40, 40);
-	  }
+	  } else {
           lsm9ds1_stop_gyro_integration();
 	  STATE = AWAITING;
-
-	} else {
-  	  
+	  } 
+	  break;
 	}
 
 
