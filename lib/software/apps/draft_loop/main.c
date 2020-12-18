@@ -246,7 +246,7 @@ static float measure_distance(uint16_t current_encoder,
 //==============================================================================
 
 char dist_trav_str[16];
-int bc[200]; // can track 100 maneuvers
+float bc[200]; // can track 100 maneuvers
 float ldist;
 float rdist;
 uint16_t drive_start_enc_right;
