@@ -314,6 +314,9 @@ int main(void) {
           lsm9ds1_stop_gyro_integration();
         } else if (blocks > 0) {
           STATE = MOVE;
+	  // initialize encoder values
+          drive_start_enc_right = sensors.rightWheelEncoder;
+          drive_start_enc_left= sensors.leftWheelEncoder;
           lsm9ds1_stop_gyro_integration();
         } else {
           STATE = AWAITING;
@@ -366,13 +369,21 @@ int main(void) {
           // calculate pan and tilt "errors" with respect to first object (blocks[0]),
           // which is the biggest object (they are sorted by size).
           int32_t panOffset = (int32_t)pixy->frameWidth/2 - (int32_t)block->m_x;
+	  // measure changes in distance
+          rdist += measure_rev_distance(sensors.rightWheelEncoder, drive_start_enc_right);
+          ldist += measure_rev_distance(sensors.leftWheelEncoder, drive_start_enc_left);
+          drive_start_enc_right = sensors.rightWheelEncoder;
+          drive_start_enc_left= sensors.leftWheelEncoder;
+          snprintf(dist_trav_str, 16, "rdist: %f", rdist);
+          display_write(dist_trav_str, DISPLAY_LINE_0);
+	  
 
           // adjust accordingly
           if (panOffset < -20)
             kobukiDriveDirect(-40, -50); //right turn (1)
-	    if (!wasRight) {
-              bc[nextCrumbInd] = 1;
-	    }
+	    //if (!wasRight) {
+              //bc[nextCrumbInd] = 1;
+	    //}
 	    wasRight = true;
           else if (panOffset > 20)
             kobukiDriveDirect(-50, -40); //left turn (-1)
