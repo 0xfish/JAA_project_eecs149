@@ -319,7 +319,7 @@ int main(void) {
 	  // add total ldist and rdist to DS
 	  bc[0] = 0; // dir = straight
 	  //bc[1] = rdist; // straight for 'this' distance
-	  bc[1] = .5; // straight for 'this' distance
+	  bc[1] = rdist; // straight for 'this' distance
 	  STATE = RETURN;
           rdist = 0.0;
 	  ldist = 0.0;
@@ -390,7 +390,7 @@ int main(void) {
             drive_start_enc_left= sensors.leftWheelEncoder;
             snprintf(dist_trav_str, 16, "rdist: %f", rdist);
             display_write(dist_trav_str, DISPLAY_LINE_0);
-            kobukiDriveDirect(-40, -40);
+            kobukiDriveDirect(40, 40);
 	  }
           lsm9ds1_stop_gyro_integration();
 	  STATE = AWAITING;
