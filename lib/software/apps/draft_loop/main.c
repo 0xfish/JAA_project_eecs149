@@ -388,7 +388,7 @@ int main(void) {
             drive_start_enc_left= sensors.leftWheelEncoder;
             snprintf(dist_trav_str, 16, "rdist: %f", rdist);
             display_write(dist_trav_str, DISPLAY_LINE_0);
-            kobukiDriveDirect(40, 40);
+            kobukiDriveDirect(-40, -40);
 	  }
           lsm9ds1_stop_gyro_integration();
 	  STATE = AWAITING;
