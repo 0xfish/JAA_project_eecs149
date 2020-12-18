@@ -315,10 +315,12 @@ int main(void) {
 	  drive_start_enc_left = sensors.leftWheelEncoder;
           lsm9ds1_stop_gyro_integration();
         } else if (blocks > 0) {
+	  in_scan = false;
           STATE = MOVE;
 	  // initialize encoder values
           drive_start_enc_right = sensors.rightWheelEncoder;
           drive_start_enc_left= sensors.leftWheelEncoder;
+	  rdist = 0;
           lsm9ds1_stop_gyro_integration();
         } else {
           STATE = AWAITING;
