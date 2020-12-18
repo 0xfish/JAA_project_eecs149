@@ -318,7 +318,8 @@ int main(void) {
           //STATE = SCAN;
 	  // add total ldist and rdist to DS
 	  bc[0] = 0; // dir = straight
-	  bc[1] = rdist; // straight for 'this' distance
+	  //bc[1] = rdist; // straight for 'this' distance
+	  bc[1] = .5; // straight for 'this' distance
 	  STATE = RETURN;
           rdist = 0.0;
 	  ldist = 0.0;
@@ -381,9 +382,10 @@ int main(void) {
 	  // retrace steps while return distance not achieved
           drive_start_enc_right = sensors.rightWheelEncoder;
           drive_start_enc_left= sensors.leftWheelEncoder;
+	  printf("rdist: %f\n", rdist);
 	  while (rdist < bc[1]) {
             rdist += measure_distance(sensors.rightWheelEncoder, drive_start_enc_right);
-            ldist += measure_distance(sensors.rightWheelEncoder, drive_start_enc_right);
+            ldist += measure_distance(sensors.leftWheelEncoder, drive_start_enc_left);
             drive_start_enc_right = sensors.rightWheelEncoder;
             drive_start_enc_left= sensors.leftWheelEncoder;
             snprintf(dist_trav_str, 16, "rdist: %f", rdist);
