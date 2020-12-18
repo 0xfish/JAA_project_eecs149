@@ -243,6 +243,25 @@ static float measure_distance(uint16_t current_encoder,
   }
 }
 
+static float measure_rev_distance(uint16_t current_encoder,
+                              uint16_t previous_encoder) {
+
+  // conversion from encoder ticks to meters
+  const float CONVERSION = 0.0006108;
+
+  // calculate result here and return it
+  // 65535
+  uint16_t limit = 0;
+  // overflow case
+  if (current_encoder > previous_encoder) {
+    return ((float) current_encoder - (float) previous_encoder + limit) * CONVERSION;
+  // non-overflow case
+  } else {
+    return ((float) previous_encoder - (float) current_encoder) * CONVERSION;
+  }
+}
+
+
 //==============================================================================
 
 bool wasRight;
