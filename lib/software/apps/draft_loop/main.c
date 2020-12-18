@@ -245,6 +245,9 @@ static float measure_distance(uint16_t current_encoder,
 
 //==============================================================================
 
+bool wasRight;
+bool wasLeft;
+bool wasStraight;
 char dist_trav_str[16];
 float bc[200]; // can track 100 maneuvers
 float ldist;
@@ -347,11 +350,17 @@ int main(void) {
 
           // adjust accordingly
           if (panOffset < -20)
-            kobukiDriveDirect(-40, -50);
+            kobukiDriveDirect(-40, -50); //right turn (1)
+	    if (!wasRight) {
+              bc[nextCrumbInd] = 1;
+	    }
+	    wasRight = true;
           else if (panOffset > 20)
-            kobukiDriveDirect(-50, -40);
+            kobukiDriveDirect(-50, -40); //left turn (-1)
+	    wasLeft = true;
           else
-            kobukiDriveDirect(-40, -40);
+            kobukiDriveDirect(-40, -40); // straight (0)
+	    wasStraight = true;
 
         // no object detected, go into reset state
         } else {
