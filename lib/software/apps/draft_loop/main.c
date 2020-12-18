@@ -449,17 +449,30 @@ int main(void) {
       }
 
       case RETURN: {
-	  if (rdist < bc[1]) {
+          // pop last mnvr off stack
+	  int dir = bc[lastCrumbId];
+	  // if the distance of the right wheel hasn't traveled necessary for last mnvr
+	  if (lastCrumbId < 0) {  
+	    // no more mnvr's to undo
+            lsm9ds1_stop_gyro_integration();
+	    STATE = AWAITING;
+	  } else if (rdist < bc[lastCrumbId + 2]) {
             rdist += measure_distance(sensors.rightWheelEncoder, drive_start_enc_right);
             ldist += measure_distance(sensors.leftWheelEncoder, drive_start_enc_left);
             drive_start_enc_right = sensors.rightWheelEncoder;
             drive_start_enc_left= sensors.leftWheelEncoder;
             snprintf(dist_trav_str, 16, "rdist: %f", rdist);
             display_write(dist_trav_str, DISPLAY_LINE_0);
-            kobukiDriveDirect(40, 40);
+	    if (dir == 0) { // straight case
+              kobukiDriveDirect(40, 40);
+	    } else if (dir == -1) { // left case - do inverse operation and go right
+              kobukiDriveDirect(50, 40);
+	    } else { // right case - do inverse operation and go left
+              kobukiDriveDirect(40, 50);
+	    }
 	  } else {
-          lsm9ds1_stop_gyro_integration();
-	  STATE = AWAITING;
+	    // completion of one mnvr
+	    lastCrumbId -= 3;
 	  } 
 	  break;
 	}
